@@ -1,8 +1,10 @@
 // Modal tạo CV mới
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaTimes, FaPlus, FaTrash, FaCamera } from "react-icons/fa";
+import useAuthStore from "../store/authStore";
 
 function CreateCVModal({ isOpen, onClose, onSave }) {
+  const user = useAuthStore((state) => state.user);
   const avatarInputRef = useRef(null);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -234,15 +236,16 @@ function CreateCVModal({ isOpen, onClose, onSave }) {
         size: blob.size,
       }, `${formData.fullName || "CV"}_${Date.now()}.html`);
       
-      // Reset form
+      // Reset form nhưng giữ lại avatar và thông tin user
       setFormData({
-        fullName: "",
-        email: "",
+        fullName: user?.name || "",
+        email: user?.email || "",
         phone: "",
         address: "",
         dateOfBirth: "",
         gender: "",
         objective: "",
+        avatar: user?.avatar || "",
         softSkills: [""],
         technicalSkills: [""],
         education: [{
@@ -270,6 +273,18 @@ function CreateCVModal({ isOpen, onClose, onSave }) {
     
     reader.readAsDataURL(blob);
   };
+
+  // Set mặc định từ user khi modal mở
+  useEffect(() => {
+    if (isOpen && user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name || "",
+        email: prev.email || user.email || "",
+        avatar: prev.avatar || user.avatar || "",
+      }));
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 

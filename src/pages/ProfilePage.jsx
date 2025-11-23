@@ -21,6 +21,7 @@ function ProfilePage() {
     role: "",
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   // Route protection
   useEffect(() => {
@@ -118,6 +119,13 @@ function ProfilePage() {
     fileInputRef.current?.click();
   };
 
+  const handleAvatarView = (e) => {
+    e.stopPropagation();
+    if (avatarPreview || user?.avatar) {
+      setIsAvatarModalOpen(true);
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -149,33 +157,37 @@ function ProfilePage() {
         </div>
 
         {/* Profile Card */}
-        <div className="bg-white rounded-xl p-8 shadow-md mb-6">
+        <div className="bg-white rounded-xl p-6 sm:p-8 shadow-md mb-6">
           {/* Avatar Section */}
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200">
-            <div className="relative group">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 pb-8 border-b border-gray-200">
+            <div className="relative flex-shrink-0">
               {avatarPreview || user?.avatar ? (
                 <div className="relative">
                   <img
                     src={avatarPreview || user?.avatar}
                     alt="Avatar"
-                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
+                    onClick={handleAvatarView}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-md cursor-pointer hover:opacity-90 transition-opacity"
                   />
                   <button
-                    onClick={handleRemoveAvatar}
-                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAvatar();
+                    }}
+                    className="absolute -top-1 -right-1 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg cursor-pointer z-10"
                     title="Xóa ảnh đại diện"
                   >
-                    <FaTimes className="w-3 h-3" />
+                    <FaTimes className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
               )}
               <button
                 onClick={handleAvatarClick}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors shadow-lg border-2 border-white cursor-pointer"
+                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
                 title="Cập nhật ảnh đại diện"
               >
                 <FaCamera className="w-4 h-4" />
@@ -188,8 +200,8 @@ function ProfilePage() {
                 className="hidden"
               />
             </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">
                 {user?.name || "Chưa có tên"}
               </h2>
               <p className="text-purple-600 font-medium mb-1">
@@ -197,12 +209,12 @@ function ProfilePage() {
                   ? "Nhà tuyển dụng"
                   : "Người tìm việc"}
               </p>
-              <p className="text-gray-600 text-sm">{user?.email}</p>
+              <p className="text-gray-600 text-sm truncate">{user?.email}</p>
             </div>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer whitespace-nowrap"
               >
                 Chỉnh sửa
               </button>
@@ -361,6 +373,30 @@ function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Modal hiển thị ảnh avatar lớn */}
+      {isAvatarModalOpen && (avatarPreview || user?.avatar) && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsAvatarModalOpen(false)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center">
+            <img
+              src={avatarPreview || user?.avatar}
+              alt="Avatar"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setIsAvatarModalOpen(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer"
+              title="Đóng"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

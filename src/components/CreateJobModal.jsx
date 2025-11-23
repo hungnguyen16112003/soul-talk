@@ -1,28 +1,16 @@
 // Modal tạo/chỉnh sửa tin tuyển dụng
-import { useState, useEffect } from "react";
-import { Toast, useToast } from "./Toast";
+import { useState } from "react";
 import { disabilityTypes, severityLevels } from "../data/mockData";
+import { Toast, useToast } from "./Toast";
 
 function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
   const { toast, showToast, hideToast } = useToast();
-  const [formData, setFormData] = useState({
-    title: "",
-    company: "",
-    location: "TP.HCM",
-    salary: "",
-    description: "",
-    requirements: [],
-    disabilityTypes: [],
-    severityLevel: "Nhẹ",
-    status: "active",
-  });
 
-  const [newRequirement, setNewRequirement] = useState("");
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
+  // Initialize formData based on editingJob
+  // With key prop in parent, component remounts when editingJob changes
+  const getInitialFormData = () => {
     if (editingJob) {
-      setFormData({
+      return {
         title: editingJob.title || "",
         company: editingJob.company || "",
         location: editingJob.location || "TP.HCM",
@@ -32,21 +20,24 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
         disabilityTypes: editingJob.disabilityTypes || [],
         severityLevel: editingJob.severityLevel || "Nhẹ",
         status: editingJob.status || "active",
-      });
-    } else {
-      setFormData({
-        title: "",
-        company: "",
-        location: "TP.HCM",
-        salary: "",
-        description: "",
-        requirements: [],
-        disabilityTypes: [],
-        severityLevel: "Nhẹ",
-        status: "active",
-      });
+      };
     }
-  }, [editingJob, isOpen]);
+    return {
+      title: "",
+      company: "",
+      location: "TP.HCM",
+      salary: "",
+      description: "",
+      requirements: [],
+      disabilityTypes: [],
+      severityLevel: "Nhẹ",
+      status: "active",
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
+  const [newRequirement, setNewRequirement] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -92,8 +83,7 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
     if (!formData.title) newErrors.title = "Vui lòng nhập tiêu đề!";
     if (!formData.company) newErrors.company = "Vui lòng nhập tên công ty!";
     if (!formData.salary) newErrors.salary = "Vui lòng nhập mức lương!";
-    if (!formData.description)
-      newErrors.description = "Vui lòng nhập mô tả!";
+    if (!formData.description) newErrors.description = "Vui lòng nhập mô tả!";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -354,5 +344,3 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
 }
 
 export default CreateJobModal;
-
-

@@ -14,11 +14,21 @@ function SuccessStoriesPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [storyToDelete, setStoryToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // Hàm lấy emoji mặc định từ avatar của user
+  const getDefaultEmoji = () => {
+    // Nếu user có avatar là emoji, dùng nó
+    if (user?.avatar && !user.avatar.startsWith("data:") && !user.avatar.startsWith("http")) {
+      return user.avatar;
+    }
+    // Nếu không, dùng emoji mặc định
+    return "👤";
+  };
+
   const [newStory, setNewStory] = useState({
-    name: "",
+    name: user?.name || "",
     title: "",
     story: "",
-    image: "👤",
+    image: getDefaultEmoji(),
   });
 
   const handleReadMore = (story) => {
@@ -46,10 +56,10 @@ function SuccessStoriesPage() {
 
     setStories([story, ...stories]);
     setNewStory({
-      name: "",
+      name: user?.name || "",
       title: "",
       story: "",
-      image: "👤",
+      image: getDefaultEmoji(),
     });
     setIsShareModalOpen(false);
     showToast("Cảm ơn bạn đã chia sẻ câu chuyện của mình! Câu chuyện sẽ được duyệt trước khi hiển thị.", "success");
@@ -63,10 +73,10 @@ function SuccessStoriesPage() {
   const closeShareModal = () => {
     setIsShareModalOpen(false);
     setNewStory({
-      name: "",
+      name: user?.name || "",
       title: "",
       story: "",
-      image: "👤",
+      image: getDefaultEmoji(),
     });
   };
 
@@ -102,7 +112,7 @@ function SuccessStoriesPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               🌟 Câu chuyện thành công
@@ -113,7 +123,7 @@ function SuccessStoriesPage() {
           </div>
           <button
             onClick={handleOpenShareModal}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-medium flex items-center gap-2 cursor-pointer"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2 cursor-pointer w-full md:w-auto"
           >
             <FaPen className="w-4 h-4" />
             <span>Chia sẻ câu chuyện</span>

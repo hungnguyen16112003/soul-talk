@@ -5,6 +5,16 @@ import JobCard from "../components/JobCard";
 import { mockJobs, disabilityTypes, severityLevels } from "../data/mockData";
 import useAuthStore from "../store/authStore";
 
+// Hàm bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
+const removeVietnameseAccents = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
+
 function JobSeekerPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -30,14 +40,14 @@ function JobSeekerPage() {
   useEffect(() => {
     let result = [...jobs];
 
-    // Filter by search
+    // Filter by search (không phân biệt có/không dấu)
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+      const searchNormalized = removeVietnameseAccents(filters.search.toLowerCase());
       result = result.filter(
         (job) =>
-          job.title.toLowerCase().includes(searchLower) ||
-          job.company.toLowerCase().includes(searchLower) ||
-          job.description.toLowerCase().includes(searchLower)
+          removeVietnameseAccents(job.title.toLowerCase()).includes(searchNormalized) ||
+          removeVietnameseAccents(job.company.toLowerCase()).includes(searchNormalized) ||
+          removeVietnameseAccents(job.description.toLowerCase()).includes(searchNormalized)
       );
     }
 

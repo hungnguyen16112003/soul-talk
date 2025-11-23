@@ -303,9 +303,9 @@ function ReviewFAQPage() {
                         </h3>
                         <div className="flex-shrink-0">
                           {isOpen ? (
-                            <FaChevronUp className="w-5 h-5 text-purple-600" />
+                            <FaChevronUp className="w-3.5 h-3.5 text-purple-600" />
                           ) : (
-                            <FaChevronDown className="w-5 h-5 text-gray-500" />
+                            <FaChevronDown className="w-3.5 h-3.5 text-gray-500" />
                           )}
                         </div>
                       </button>

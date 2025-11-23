@@ -10,7 +10,7 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
 
   return (
     <div
-      className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+      className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col"
       onClick={!showActions ? handleCardClick : undefined}
     >
       <div className="flex justify-between items-start mb-4">
@@ -35,7 +35,7 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
               ))}
             </div>
           )}
-          <p className="text-gray-700 line-clamp-2 mb-2">{job.description}</p>
+          <p className="text-gray-700 line-clamp-2 mb-2 flex-grow">{job.description}</p>
           {job.requirements && job.requirements.length > 0 && (
             <div className="mt-2">
               <p className="text-sm font-semibold text-gray-700 mb-1">
@@ -48,18 +48,19 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
               </ul>
             </div>
           )}
-          <div className="mt-3 flex items-center justify-between">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                job.status === "active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-700"
-              }`}
-            >
-              {job.status === "active" ? "Còn tuyển" : "Tạm dừng"}
-            </span>
-          </div>
         </div>
+      </div>
+
+      <div className="mt-auto pt-3 flex items-center justify-between">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            job.status === "active"
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          {job.status === "active" ? "Còn tuyển" : "Tạm dừng"}
+        </span>
       </div>
 
       {showActions && (

@@ -8,6 +8,16 @@ import { mockJobs } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
 
+// Hàm bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
+const removeVietnameseAccents = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
+
 function EmployerPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -39,11 +49,11 @@ function EmployerPage() {
     let result = [...jobs];
 
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+      const searchNormalized = removeVietnameseAccents(filters.search.toLowerCase());
       result = result.filter(
         (job) =>
-          job.title.toLowerCase().includes(searchLower) ||
-          job.company.toLowerCase().includes(searchLower)
+          removeVietnameseAccents(job.title.toLowerCase()).includes(searchNormalized) ||
+          removeVietnameseAccents(job.company.toLowerCase()).includes(searchNormalized)
       );
     }
 
@@ -293,6 +303,7 @@ function EmployerPage() {
 
       {/* Modals */}
       <CreateJobModal
+        key={editingJob?.id || "new"}
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
