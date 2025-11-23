@@ -251,6 +251,7 @@ export const charityPrograms = [
       "Chương trình cấp học bổng hàng năm cho sinh viên khuyết tật có hoàn cảnh khó khăn, hỗ trợ chi phí học tập và sinh hoạt",
     location: "Toàn quốc",
     contact: "contact@charity.vn",
+    image: "https://picsum.photos/800/600?random=1",
   },
   {
     id: 2,
@@ -260,6 +261,7 @@ export const charityPrograms = [
       "Hỗ trợ xe lăn miễn phí cho người khuyết tật vận động có hoàn cảnh khó khăn tại các tỉnh thành trên cả nước",
     location: "Hà Nội, TP.HCM",
     contact: "support@redcross.vn",
+    image: "https://picsum.photos/800/600?random=2",
   },
   {
     id: 3,
@@ -269,6 +271,7 @@ export const charityPrograms = [
       "Tổ chức các khóa đào tạo nghề miễn phí và giới thiệu việc làm phù hợp cho người khuyết tật, giúp họ có cơ hội tự lập và hòa nhập cộng đồng",
     location: "Đà Nẵng",
     contact: "info@support-center.vn",
+    image: "https://picsum.photos/800/600?random=3",
   },
   {
     id: 4,
@@ -278,6 +281,7 @@ export const charityPrograms = [
       "Chương trình hỗ trợ phẫu thuật chỉnh hình miễn phí cho trẻ em khuyết tật có hoàn cảnh khó khăn, giúp cải thiện chất lượng cuộc sống",
     location: "TP.HCM",
     contact: "fund@children-hospital.vn",
+    image: "https://picsum.photos/800/600?random=4",
   },
   {
     id: 5,
@@ -287,6 +291,7 @@ export const charityPrograms = [
       "Cung cấp thiết bị công nghệ hỗ trợ như máy trợ thính, máy đọc chữ nổi, phần mềm hỗ trợ cho người khuyết tật có nhu cầu",
     location: "Hà Nội",
     contact: "assistive@techforgood.vn",
+    image: "https://picsum.photos/800/600?random=5",
   },
   {
     id: 6,
@@ -296,6 +301,7 @@ export const charityPrograms = [
       "Cung cấp thực phẩm dinh dưỡng và bổ sung vitamin cho trẻ em và người khuyết tật có hoàn cảnh khó khăn",
     location: "Toàn quốc",
     contact: "nutrition@childrenfund.vn",
+    image: "https://picsum.photos/800/600?random=6",
   },
 ];
 
@@ -309,6 +315,7 @@ export const healthCareServices = [
       "Chương trình khám sức khỏe định kỳ miễn phí hàng tháng cho người khuyết tật, bao gồm kiểm tra tổng quát, xét nghiệm cơ bản và tư vấn sức khỏe",
     location: "Hà Nội",
     contact: "0241234567",
+    image: "https://picsum.photos/800/600?random=7",
   },
   {
     id: 2,
@@ -318,6 +325,7 @@ export const healthCareServices = [
       "Dịch vụ vật lý trị liệu chuyên sâu với giá ưu đãi dành cho người khuyết tật vận động, giúp cải thiện khả năng vận động và hòa nhập",
     location: "TP.HCM",
     contact: "0287654321",
+    image: "https://picsum.photos/800/600?random=2",
   },
   {
     id: 3,
@@ -327,6 +335,7 @@ export const healthCareServices = [
       "Kiểm tra mắt miễn phí, cấp kính mắt với giá ưu đãi, và hỗ trợ thiết bị trợ thị cho người khiếm thị",
     location: "Hà Nội",
     contact: "0241234568",
+    image: "https://picsum.photos/800/600?random=8",
   },
   {
     id: 4,
@@ -336,6 +345,7 @@ export const healthCareServices = [
       "Kiểm tra thính lực miễn phí, tư vấn và hỗ trợ máy trợ thính với giá ưu đãi cho người khiếm thính",
     location: "Đà Nẵng",
     contact: "0236123456",
+    image: "https://picsum.photos/800/600?random=9",
   },
   {
     id: 5,
@@ -345,6 +355,7 @@ export const healthCareServices = [
       "Dịch vụ tư vấn tâm lý miễn phí cho người khuyết tật và gia đình, giúp vượt qua khó khăn và hòa nhập tốt hơn",
     location: "TP.HCM",
     contact: "0287654322",
+    image: "https://picsum.photos/800/600?random=10",
   },
   {
     id: 6,
@@ -354,6 +365,7 @@ export const healthCareServices = [
       "Chương trình khám răng miễn phí và điều trị răng miệng với giá ưu đãi dành cho người khuyết tật",
     location: "Hà Nội",
     contact: "0241234569",
+    image: "https://picsum.photos/800/600?random=11",
   },
 ];
 
@@ -366,6 +378,7 @@ export const careerGuidanceArticles = [
     content:
       "Hướng dẫn chi tiết về cách tìm việc phù hợp với khả năng và tình trạng khuyết tật của bạn. Bao gồm các bước đánh giá bản thân, xác định điểm mạnh, và tìm kiếm cơ hội việc làm phù hợp trên các nền tảng tuyển dụng chuyên biệt.",
     date: "2024-01-15",
+    image: "https://picsum.photos/800/600?random=3",
   },
   {
     id: 2,
@@ -374,6 +387,7 @@ export const careerGuidanceArticles = [
     content:
       "Những kỹ năng quan trọng cần phát triển để thành công trong công việc, bao gồm kỹ năng giao tiếp, làm việc nhóm, sử dụng công nghệ, và khả năng thích ứng với môi trường làm việc mới.",
     date: "2024-01-20",
+    image: "https://picsum.photos/800/600?random=12",
   },
   {
     id: 3,
@@ -382,6 +396,7 @@ export const careerGuidanceArticles = [
     content:
       "Hướng dẫn cách viết CV và tạo portfolio chuyên nghiệp, làm nổi bật điểm mạnh của bạn, và trình bày kinh nghiệm làm việc một cách hiệu quả để thu hút nhà tuyển dụng.",
     date: "2024-01-25",
+    image: "https://picsum.photos/800/600?random=13",
   },
   {
     id: 4,
@@ -390,6 +405,7 @@ export const careerGuidanceArticles = [
     content:
       "Chia sẻ các kỹ thuật và mẹo quan trọng để tự tin trong phỏng vấn, trả lời câu hỏi hiệu quả, và để lại ấn tượng tích cực với nhà tuyển dụng. Bao gồm cách chuẩn bị và thực hành trước khi phỏng vấn.",
     date: "2024-02-01",
+    image: "https://picsum.photos/800/600?random=14",
   },
   {
     id: 5,
@@ -398,6 +414,7 @@ export const careerGuidanceArticles = [
     content:
       "Khám phá các cơ hội việc làm từ xa và freelance phù hợp với người khuyết tật. Hướng dẫn cách tìm kiếm, ứng tuyển và thành công trong các công việc online, từ lập trình, thiết kế, đến viết nội dung và dịch thuật.",
     date: "2024-02-05",
+    image: "https://picsum.photos/800/600?random=15",
   },
   {
     id: 6,
@@ -406,6 +423,7 @@ export const careerGuidanceArticles = [
     content:
       "Tầm quan trọng của networking trong việc tìm kiếm cơ hội nghề nghiệp. Hướng dẫn cách tham gia các sự kiện, cộng đồng, và xây dựng mối quan hệ với các chuyên gia trong ngành để mở rộng cơ hội việc làm.",
     date: "2024-02-10",
+    image: "https://picsum.photos/800/600?random=16",
   },
 ];
 
