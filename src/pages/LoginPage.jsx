@@ -55,7 +55,10 @@ function LoginPage() {
     // Thực hiện đăng nhập
     const userData = {
       id: `user-${Date.now()}`,
-      name: formData.role === "employer" ? "Nhà Tuyển Dụng Demo" : "Người Tìm Việc Demo",
+      name:
+        formData.role === "employer"
+          ? "Nhà Tuyển Dụng Demo"
+          : "Người Tìm Việc Demo",
       email: formData.email,
       role: formData.role,
     };
@@ -132,7 +135,10 @@ function LoginPage() {
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email
             </label>
             <input
@@ -153,7 +159,10 @@ function LoginPage() {
 
           {/* Mật khẩu */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Mật khẩu
             </label>
             <input
@@ -176,7 +185,7 @@ function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition-all cursor-pointer"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer"
             >
               Đăng nhập
             </button>

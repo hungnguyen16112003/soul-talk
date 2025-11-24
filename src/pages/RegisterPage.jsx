@@ -153,7 +153,10 @@ function RegisterPage() {
 
           {/* Họ tên */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700"
+            >
               Họ tên
             </label>
             <input
@@ -174,7 +177,10 @@ function RegisterPage() {
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email
             </label>
             <input
@@ -195,7 +201,10 @@ function RegisterPage() {
 
           {/* Số điện thoại */}
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-700"
+            >
               Số điện thoại
             </label>
             <input
@@ -216,7 +225,10 @@ function RegisterPage() {
 
           {/* Mật khẩu */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Mật khẩu
             </label>
             <input
@@ -237,7 +249,10 @@ function RegisterPage() {
 
           {/* Xác nhận mật khẩu */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
               Xác nhận mật khẩu
             </label>
             <input
@@ -252,7 +267,9 @@ function RegisterPage() {
               placeholder="Xác nhận mật khẩu"
             />
             {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 
@@ -260,7 +277,7 @@ function RegisterPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg transition-all cursor-pointer"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer"
             >
               Đăng ký
             </button>

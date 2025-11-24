@@ -1,5 +1,5 @@
 // Trang quản lý cho nhà tuyển dụng
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import JobCard from "../components/JobCard";
 import CreateJobModal from "../components/CreateJobModal";
@@ -7,6 +7,8 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { mockJobs } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
+import { FaPlusCircle, FaClipboardList } from "react-icons/fa";
+import { MdDashboard } from "react-icons/md";
 
 // Hàm bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
 const removeVietnameseAccents = (str) => {
@@ -22,11 +24,9 @@ function EmployerPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const logout = useAuthStore((state) => state.logout);
 
   const { toast, showToast, hideToast } = useToast();
   const [jobs, setJobs] = useState([...mockJobs]);
-  const [filteredJobs, setFilteredJobs] = useState([...mockJobs]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
@@ -44,16 +44,21 @@ function EmployerPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Filter jobs
-  useEffect(() => {
+  const filteredJobs = useMemo(() => {
     let result = [...jobs];
 
     if (filters.search) {
-      const searchNormalized = removeVietnameseAccents(filters.search.toLowerCase());
+      const searchNormalized = removeVietnameseAccents(
+        filters.search.toLowerCase()
+      );
       result = result.filter(
         (job) =>
-          removeVietnameseAccents(job.title.toLowerCase()).includes(searchNormalized) ||
-          removeVietnameseAccents(job.company.toLowerCase()).includes(searchNormalized)
+          removeVietnameseAccents(job.title.toLowerCase()).includes(
+            searchNormalized
+          ) ||
+          removeVietnameseAccents(job.company.toLowerCase()).includes(
+            searchNormalized
+          )
       );
     }
 
@@ -65,7 +70,7 @@ function EmployerPage() {
       result = result.filter((job) => job.status === filters.status);
     }
 
-    setFilteredJobs(result);
+    return result;
   }, [filters, jobs]);
 
   // Statistics
@@ -92,7 +97,9 @@ function EmployerPage() {
 
   const handleUpdateJob = (jobData) => {
     setJobs((prev) =>
-      prev.map((job) => (job.id === editingJob.id ? { ...job, ...jobData } : job))
+      prev.map((job) =>
+        job.id === editingJob.id ? { ...job, ...jobData } : job
+      )
     );
     setEditingJob(null);
     showToast("Cập nhật tin tuyển dụng thành công!", "success");
@@ -131,13 +138,13 @@ function EmployerPage() {
         onClose={hideToast}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white mb-8 shadow-lg">
+        <div className="animate-gradient-slide rounded-xl p-8 text-white mb-8 shadow-lg overflow-hidden">
           <h1 className="text-3xl font-bold mb-2">
             Chào mừng, {user?.name || "Nhà tuyển dụng"}!
           </h1>
-          <p className="text-purple-100">
+          <p className="text-white/90">
             Quản lý tin tuyển dụng và tìm kiếm nhân tài phù hợp
           </p>
         </div>
@@ -149,18 +156,18 @@ function EmployerPage() {
               setEditingJob(null);
               setIsCreateModalOpen(true);
             }}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-left cursor-pointer"
+            className="bg-white text-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-left border-2 border-purple-200 cursor-pointer"
           >
-            <div className="text-3xl mb-2">➕</div>
+            <FaPlusCircle className="w-10 h-10 mb-3 text-green-500" />
             <h3 className="font-bold text-lg mb-1">Tạo tin tuyển dụng</h3>
-            <p className="text-purple-100 text-sm">Đăng tin tuyển dụng mới</p>
+            <p className="text-gray-600 text-sm">Đăng tin tuyển dụng mới</p>
           </button>
 
           <button
             onClick={() => navigate("/employer/dashboard")}
             className="bg-white text-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-left border-2 border-purple-200 cursor-pointer"
           >
-            <div className="text-3xl mb-2">📊</div>
+            <MdDashboard className="w-10 h-10 mb-3 text-orange-500" />
             <h3 className="font-bold text-lg mb-1">Dashboard</h3>
             <p className="text-gray-600 text-sm">Xem thống kê và báo cáo</p>
           </button>
@@ -169,7 +176,7 @@ function EmployerPage() {
             onClick={() => navigate("/employer/applications")}
             className="bg-white text-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-left border-2 border-purple-200 cursor-pointer"
           >
-            <div className="text-3xl mb-2">📝</div>
+            <FaClipboardList className="w-10 h-10 mb-3 text-blue-500" />
             <h3 className="font-bold text-lg mb-1">Đơn ứng tuyển</h3>
             <p className="text-gray-600 text-sm">Quản lý đơn ứng tuyển</p>
           </button>
@@ -279,9 +286,12 @@ function EmployerPage() {
                 setEditingJob(null);
                 setIsCreateModalOpen(true);
               }}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all cursor-pointer"
+              className="bg-white text-gray-900 px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all border-2 border-purple-200 cursor-pointer"
             >
-              ➕ Tạo tin tuyển dụng
+              <span className="flex items-center justify-center gap-2 font-semibold">
+                <FaPlusCircle className="w-5 h-5 text-purple-500" />
+                Tạo tin tuyển dụng
+              </span>
             </button>
           </div>
         )}
