@@ -230,9 +230,9 @@ function EmployerPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
               >
                 <option value="">Tất cả</option>
-                <option value="Hà Nội">Hà Nội</option>
-                <option value="TP.HCM">TP.HCM</option>
-                <option value="Đà Nẵng">Đà Nẵng</option>
+                <option value="Miền Bắc">Miền Bắc</option>
+                <option value="Miền Nam">Miền Nam</option>
+                <option value="Miền Trung">Miền Trung</option>
               </select>
             </div>
 

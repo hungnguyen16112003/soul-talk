@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import JobCard from "../components/JobCard";
 import { mockJobs, disabilityTypes, severityLevels } from "../data/mockData";
 import useAuthStore from "../store/authStore";
+import InitialPreferencesModal from "../components/InitialPreferencesModal";
 
 // Hàm bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
 const removeVietnameseAccents = (str) => {
@@ -19,6 +20,32 @@ function JobSeekerPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userPreferences = useAuthStore((state) => state.userPreferences);
+  const setUserPreferences = useAuthStore((state) => state.setUserPreferences);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [hasClosedModal, setHasClosedModal] = useState(false);
+
+  // Load guest preferences (khi chưa đăng nhập)
+  const [guestPreferences, setGuestPreferences] = useState(() => {
+    if (!isAuthenticated) {
+      const saved = localStorage.getItem("guestPreferences");
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+  
+  // Cập nhật guestPreferences khi authentication state thay đổi
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const saved = localStorage.getItem("guestPreferences");
+      setGuestPreferences(saved ? JSON.parse(saved) : null);
+    } else {
+      // Khi đã đăng nhập, xóa guest preferences
+      setGuestPreferences(null);
+    }
+  }, [isAuthenticated]);
+  
+  const preferences = userPreferences || guestPreferences;
 
   // Load profile từ localStorage nếu có
   const [profile] = useState(() => {
@@ -28,13 +55,40 @@ function JobSeekerPage() {
 
   const [jobs] = useState(mockJobs);
   const [filteredJobs, setFilteredJobs] = useState(mockJobs);
-  const [filters, setFilters] = useState({
-    search: "",
-    disabilityType: profile?.disabilityType || "",
-    severityLevel: profile?.severityLevel || "",
-    location: "",
-    status: "active",
+  
+  // Khởi tạo filters từ preferences hoặc profile
+  const [filters, setFilters] = useState(() => {
+    const prefs = preferences || userPreferences;
+    return {
+      search: "",
+      disabilityType: prefs?.disabilityType || profile?.disabilityType || "",
+      severityLevel: prefs?.severityLevel || profile?.severityLevel || "",
+      location: prefs?.region || "",
+      status: "active",
+    };
   });
+
+  // Hiển thị modal mỗi lần vào trang khi chưa đăng nhập (chỉ chạy một lần khi mount)
+  useEffect(() => {
+    // Chỉ hiển thị modal khi chưa đăng nhập, modal chưa được mở và user chưa đóng modal trong session này
+    if (!isAuthenticated && !showPreferencesModal && !hasClosedModal) {
+      setShowPreferencesModal(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy một lần khi component mount
+
+  // Cập nhật filters khi preferences thay đổi
+  useEffect(() => {
+    const prefs = preferences || userPreferences;
+    if (prefs) {
+      setFilters((prev) => ({
+        ...prev,
+        disabilityType: prefs.disabilityType || prev.disabilityType,
+        severityLevel: prefs.severityLevel || prev.severityLevel,
+        location: prefs.region || prev.location,
+      }));
+    }
+  }, [preferences, userPreferences]);
 
   // Filter jobs
   useEffect(() => {
@@ -84,17 +138,61 @@ function JobSeekerPage() {
   };
 
   const clearFilters = () => {
+    const prefs = preferences || userPreferences;
     setFilters({
       search: "",
       disabilityType: "",
       severityLevel: "",
-      location: "",
+      location: prefs?.region || "",
       status: "active",
     });
   };
 
+  const handlePreferencesComplete = (prefs) => {
+    // Đóng modal trước
+    setShowPreferencesModal(false);
+    // Đánh dấu đã đóng modal để không tự động mở lại
+    setHasClosedModal(true);
+    
+    // Nếu có preferences (user đã chọn xong)
+    if (prefs && (prefs.region || prefs.disabilityType || prefs.severityLevel)) {
+      // Nếu user đã đăng nhập, lưu vào store
+      if (isAuthenticated) {
+        setUserPreferences(prefs);
+      } else {
+        // Nếu chưa đăng nhập, lưu vào localStorage tạm thời (guest preferences)
+        localStorage.setItem("guestPreferences", JSON.stringify(prefs));
+        // Cập nhật guestPreferences state
+        setGuestPreferences(prefs);
+      }
+      
+      // Cập nhật filters ngay lập tức
+      setFilters((prev) => ({
+        ...prev,
+        disabilityType: prefs.disabilityType || prev.disabilityType,
+        severityLevel: prefs.severityLevel || prev.severityLevel,
+        location: prefs.region || prev.location,
+      }));
+    } else {
+      // Nếu không có preferences (user đóng modal mà chưa chọn xong)
+      // Không lưu gì cả và reset filters về trạng thái ban đầu (hiển thị tất cả)
+      setFilters({
+        search: "",
+        disabilityType: "",
+        severityLevel: "",
+        location: "",
+        status: "active",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <InitialPreferencesModal
+        isOpen={showPreferencesModal}
+        onComplete={handlePreferencesComplete}
+        onClose={() => setShowPreferencesModal(false)}
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -174,9 +272,9 @@ function JobSeekerPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
               >
                 <option value="">Tất cả địa điểm</option>
-                <option value="Hà Nội">Hà Nội</option>
-                <option value="TP.HCM">TP.HCM</option>
-                <option value="Đà Nẵng">Đà Nẵng</option>
+                <option value="Miền Bắc">Miền Bắc</option>
+                <option value="Miền Nam">Miền Nam</option>
+                <option value="Miền Trung">Miền Trung</option>
               </select>
             </div>
           </div>

@@ -13,7 +13,7 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
       return {
         title: editingJob.title || "",
         company: editingJob.company || "",
-        location: editingJob.location || "TP.HCM",
+        location: editingJob.location || "Miền Nam",
         salary: editingJob.salary || "",
         description: editingJob.description || "",
         requirements: editingJob.requirements || [],
@@ -25,7 +25,7 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
     return {
       title: "",
       company: "",
-      location: "TP.HCM",
+      location: "Miền Nam",
       salary: "",
       description: "",
       requirements: [],
@@ -177,9 +177,9 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="Hà Nội">Hà Nội</option>
-                <option value="TP.HCM">TP.HCM</option>
-                <option value="Đà Nẵng">Đà Nẵng</option>
+                <option value="Miền Bắc">Miền Bắc</option>
+                <option value="Miền Nam">Miền Nam</option>
+                <option value="Miền Trung">Miền Trung</option>
               </select>
             </div>
 

@@ -63,7 +63,7 @@ function CreateCVModal({ isOpen, onClose, onSave }) {
       fullName: "Nguyễn Văn A",
       email: "nguyenvana@email.com",
       phone: "0901234567",
-      address: "123 Đường ABC, Quận 1, TP. Hồ Chí Minh",
+      address: "123 Đường ABC, Quận 1, Miền Nam",
       dateOfBirth: "2003-11-16",
       gender: "Nam",
       objective: "Tìm kiếm cơ hội phát triển sự nghiệp trong lĩnh vực công nghệ thông tin, đặc biệt là phát triển web và ứng dụng di động. Mong muốn được làm việc trong môi trường chuyên nghiệp, năng động và có cơ hội học hỏi, phát triển kỹ năng.",
@@ -83,7 +83,7 @@ function CreateCVModal({ isOpen, onClose, onSave }) {
       ],
       education: [
         {
-          school: "Đại học Bách Khoa TP.HCM",
+          school: "Đại học Bách Khoa Miền Nam",
           degree: "Cử nhân",
           major: "Khoa học Máy tính",
           startDate: "2021-09",

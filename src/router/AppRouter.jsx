@@ -9,9 +9,15 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import OnboardingPage from "../pages/OnboardingPage";
 import CharityPage from "../pages/CharityPage";
+import CharityDetailPage from "../pages/CharityDetailPage";
+import ScholarshipPage from "../pages/ScholarshipPage";
+import ScholarshipDetailPage from "../pages/ScholarshipDetailPage";
 import HealthCarePage from "../pages/HealthCarePage";
+import HealthCareDetailPage from "../pages/HealthCareDetailPage";
 import CareerGuidancePage from "../pages/CareerGuidancePage";
+import CareerGuidanceDetailPage from "../pages/CareerGuidanceDetailPage";
 import SuccessStoriesPage from "../pages/SuccessStoriesPage";
+import SuccessStoryDetailPage from "../pages/SuccessStoryDetailPage";
 import ReviewFAQPage from "../pages/ReviewFAQPage";
 import EmployerDashboardPage from "../pages/EmployerDashboardPage";
 import EmployerApplicationsPage from "../pages/EmployerApplicationsPage";
@@ -39,9 +45,15 @@ function AppRouter() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/manage-cv" element={<ManageCVPage />} />
         <Route path="/charity" element={<CharityPage />} />
+        <Route path="/charity/:id" element={<CharityDetailPage />} />
+        <Route path="/scholarships" element={<ScholarshipPage />} />
+        <Route path="/scholarships/:id" element={<ScholarshipDetailPage />} />
         <Route path="/healthcare" element={<HealthCarePage />} />
+        <Route path="/healthcare/:id" element={<HealthCareDetailPage />} />
         <Route path="/career-guidance" element={<CareerGuidancePage />} />
+        <Route path="/career-guidance/:id" element={<CareerGuidanceDetailPage />} />
         <Route path="/success-stories" element={<SuccessStoriesPage />} />
+        <Route path="/success-stories/:id" element={<SuccessStoryDetailPage />} />
         <Route path="/review-faq" element={<ReviewFAQPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

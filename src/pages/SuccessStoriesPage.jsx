@@ -1,16 +1,16 @@
 // Trang câu chuyện thành công
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { successStories as initialStories } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
-import { FaTimes, FaUser, FaPen, FaTrash } from "react-icons/fa";
+import { FaTimes, FaPen, FaTrash } from "react-icons/fa";
 import useAuthStore from "../store/authStore";
 
 function SuccessStoriesPage() {
   const { toast, showToast, hideToast } = useToast();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [stories, setStories] = useState(initialStories);
-  const [selectedStory, setSelectedStory] = useState(null);
-  const [isReadMoreModalOpen, setIsReadMoreModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [storyToDelete, setStoryToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -31,9 +31,8 @@ function SuccessStoriesPage() {
     image: getDefaultEmoji(),
   });
 
-  const handleReadMore = (story) => {
-    setSelectedStory(story);
-    setIsReadMoreModalOpen(true);
+  const handleCardClick = (story) => {
+    navigate(`/success-stories/${story.id}`);
   };
 
   const handleOpenShareModal = () => {
@@ -63,11 +62,6 @@ function SuccessStoriesPage() {
     });
     setIsShareModalOpen(false);
     showToast("Cảm ơn bạn đã chia sẻ câu chuyện của mình! Câu chuyện sẽ được duyệt trước khi hiển thị.", "success");
-  };
-
-  const closeReadMoreModal = () => {
-    setIsReadMoreModalOpen(false);
-    setSelectedStory(null);
   };
 
   const closeShareModal = () => {
@@ -147,84 +141,30 @@ function SuccessStoriesPage() {
                     <FaTrash className="w-4 h-4" />
                   </button>
                 )}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="text-5xl flex-shrink-0">{story.image}</div>
-                  <div className="flex-1 min-w-0">
-                    <h2 
-                      className="text-xl font-semibold text-gray-900 mb-1 line-clamp-1 cursor-pointer hover:text-purple-600 transition-colors"
-                      onClick={() => handleReadMore(story)}
-                    >
-                      {story.name}
-                    </h2>
-                    <h3 
-                      className="text-lg font-medium text-purple-600 mb-2 line-clamp-2 cursor-pointer hover:text-purple-700 transition-colors"
-                      onClick={() => handleReadMore(story)}
-                    >
-                      {story.title}
-                    </h3>
-                  </div>
-                </div>
-                <p className="text-gray-700 mb-4 line-clamp-4 flex-grow">
-                  {story.story}
-                </p>
-                <button
-                  onClick={() => handleReadMore(story)}
-                  className="text-purple-600 hover:text-purple-700 font-medium text-sm mt-auto whitespace-nowrap hover:underline transition-all text-left cursor-pointer"
+                <div 
+                  onClick={() => handleCardClick(story)}
+                  className="cursor-pointer"
                 >
-                  Đọc thêm →
-                </button>
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="text-5xl flex-shrink-0">{story.image}</div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-purple-600 transition-colors">
+                        {story.name}
+                      </h2>
+                      <h3 className="text-lg font-medium text-purple-600 mb-2 line-clamp-2 hover:text-purple-700 transition-colors">
+                        {story.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-4 line-clamp-4 flex-grow">
+                    {story.story}
+                  </p>
+                </div>
               </div>
             );
           })}
         </div>
       </div>
-
-      {/* Modal đọc thêm */}
-      {isReadMoreModalOpen && selectedStory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
-            {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-start rounded-t-xl">
-              <div className="flex items-start gap-4 flex-1 pr-4">
-                <div className="text-6xl flex-shrink-0">{selectedStory.image}</div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {selectedStory.name}
-                  </h2>
-                  <h3 className="text-xl font-medium text-purple-600">
-                    {selectedStory.title}
-                  </h3>
-                </div>
-              </div>
-              <button
-                onClick={closeReadMoreModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full flex-shrink-0 cursor-pointer"
-              >
-                <FaTimes className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="px-6 py-6">
-              <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed text-base whitespace-pre-line">
-                  {selectedStory.story}
-                </p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-xl">
-              <button
-                onClick={closeReadMoreModal}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg hover:shadow-lg transition-all font-medium cursor-pointer"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal chia sẻ câu chuyện */}
       {isShareModalOpen && (

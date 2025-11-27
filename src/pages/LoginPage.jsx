@@ -1,19 +1,26 @@
 // Trang đăng nhập
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
+import RegionSelectionModal from "../components/RegionSelectionModal";
+import { FaEye, FaEyeSlash, FaUserTie, FaBriefcase } from "react-icons/fa";
 
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const setSelectedRegion = useAuthStore((state) => state.setSelectedRegion);
+  const setUserPreferences = useAuthStore((state) => state.setUserPreferences);
+  const userPreferences = useAuthStore((state) => state.userPreferences);
   const { toast, showToast, hideToast } = useToast();
+  const [showRegionModal, setShowRegionModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Dữ liệu đăng nhập mẫu (pre-filled)
   const [formData, setFormData] = useState({
     email: "demo@soultalk.vn",
     password: "demo123",
-    role: "employer", // employer hoặc jobseeker
+    role: "jobseeker", // employer hoặc jobseeker
   });
 
   const [errors, setErrors] = useState({});
@@ -66,14 +73,48 @@ function LoginPage() {
     login(userData);
     showToast("Đăng nhập thành công!", "success");
 
-    // Redirect dựa vào role
-    setTimeout(() => {
-      if (formData.role === "employer") {
-        navigate("/employer");
-      } else {
-        navigate("/");
+    // Nếu là người tìm việc
+    if (formData.role === "jobseeker") {
+      // Kiểm tra xem có guest preferences không (đã chọn trước khi đăng nhập)
+      const guestPrefs = localStorage.getItem("guestPreferences");
+      
+      if (guestPrefs) {
+        try {
+          const prefs = JSON.parse(guestPrefs);
+          // Tự động chuyển guest preferences sang user preferences
+          setUserPreferences(prefs);
+          // Xóa guest preferences sau khi đã chuyển
+          localStorage.removeItem("guestPreferences");
+        } catch (e) {
+          console.error("Error parsing guest preferences:", e);
+        }
       }
-    }, 1000);
+      
+      // Nếu chưa có preferences (cả user và guest), hiển thị modal
+      if (!userPreferences && !guestPrefs) {
+        setTimeout(() => {
+          setShowRegionModal(true);
+        }, 1000);
+      } else {
+        // Đã có preferences, redirect luôn
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
+      }
+    } else {
+      // Redirect cho nhà tuyển dụng
+      setTimeout(() => {
+        navigate("/employer");
+      }, 1000);
+    }
+  };
+
+  const handleRegionSelect = (region) => {
+    setSelectedRegion(region);
+    setShowRegionModal(false);
+    setTimeout(() => {
+      navigate("/");
+    }, 300);
   };
 
   return (
@@ -83,6 +124,11 @@ function LoginPage() {
         message={toast.message}
         type={toast.type}
         onClose={hideToast}
+      />
+      <RegionSelectionModal
+        isOpen={showRegionModal}
+        onSelect={handleRegionSelect}
+        onClose={() => setShowRegionModal(false)}
       />
 
       <div className="max-w-2xl w-full space-y-8 bg-white rounded-2xl shadow-lg p-8">
@@ -110,25 +156,31 @@ function LoginPage() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, role: "employer" })}
-                className={`py-3 px-4 rounded-lg border-2 transition-all cursor-pointer ${
-                  formData.role === "employer"
-                    ? "border-purple-600 bg-purple-50 text-purple-700"
-                    : "border-gray-300 text-gray-700 hover:border-gray-400"
-                }`}
-              >
-                💼 Nhà Tuyển Dụng
-              </button>
-              <button
-                type="button"
                 onClick={() => setFormData({ ...formData, role: "jobseeker" })}
-                className={`py-3 px-4 rounded-lg border-2 transition-all cursor-pointer ${
+                className={`py-3 px-4 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   formData.role === "jobseeker"
                     ? "border-purple-600 bg-purple-50 text-purple-700"
                     : "border-gray-300 text-gray-700 hover:border-gray-400"
                 }`}
               >
-                👤 Người Tìm Việc
+                <FaUserTie className={`w-5 h-5 ${
+                  formData.role === "jobseeker" ? "text-purple-600" : "text-gray-500"
+                }`} />
+                <span className="font-medium">Người Tìm Việc</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, role: "employer" })}
+                className={`py-3 px-4 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  formData.role === "employer"
+                    ? "border-purple-600 bg-purple-50 text-purple-700"
+                    : "border-gray-300 text-gray-700 hover:border-gray-400"
+                }`}
+              >
+                <FaBriefcase className={`w-5 h-5 ${
+                  formData.role === "employer" ? "text-purple-600" : "text-gray-500"
+                }`} />
+                <span className="font-medium">Nhà Tuyển Dụng</span>
               </button>
             </div>
           </div>
@@ -165,17 +217,30 @@ function LoginPage() {
             >
               Mật khẩu
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                errors.password ? "border-red-300" : "border-gray-300"
-              } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
-              placeholder="Mật khẩu"
-            />
+            <div className="relative mt-1">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
+                  errors.password ? "border-red-300" : "border-gray-300"
+                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                placeholder="Mật khẩu"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                {showPassword ? (
+                  <FaEye className="w-5 h-5" />
+                ) : (
+                  <FaEyeSlash className="w-5 h-5" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
             )}

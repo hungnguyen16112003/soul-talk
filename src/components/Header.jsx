@@ -179,7 +179,7 @@ function Header() {
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
@@ -247,6 +247,16 @@ function Header() {
                 </Link>
 
                 <Link
+                  ref={(el) => (linkRefs.current["/scholarships"] = el)}
+                  to="/scholarships"
+                  className={`${getActiveClass(
+                    "/scholarships"
+                  )} hidden lg:block`}
+                >
+                  🎓 Học bổng
+                </Link>
+
+                <Link
                   ref={(el) => (linkRefs.current["/healthcare"] = el)}
                   to="/healthcare"
                   className={`${getActiveClass("/healthcare")} hidden lg:block`}
@@ -288,6 +298,7 @@ function Header() {
                     ref={(el) => {
                       if (
                         isActive("/charity") ||
+                        isActive("/scholarships") ||
                         isActive("/healthcare") ||
                         isActive("/career-guidance") ||
                         isActive("/success-stories") ||
@@ -299,6 +310,7 @@ function Header() {
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                     className={`relative px-4 py-2 rounded-full font-medium z-10 transition-all duration-200 cursor-pointer flex items-center gap-2 ${
                       isActive("/charity") ||
+                      isActive("/scholarships") ||
                       isActive("/healthcare") ||
                       isActive("/career-guidance") ||
                       isActive("/success-stories") ||
@@ -324,6 +336,13 @@ function Header() {
                         className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
                       >
                         💝 Từ thiện
+                      </Link>
+                      <Link
+                        to="/scholarships"
+                        onClick={() => setMoreMenuOpen(false)}
+                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
+                      >
+                        🎓 Học bổng
                       </Link>
                       <Link
                         to="/healthcare"
@@ -569,6 +588,16 @@ function Header() {
                     className={`${getMobileActiveClass("/charity")} text-left`}
                   >
                     💝 Từ thiện
+                  </Link>
+
+                  <Link
+                    to="/scholarships"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`${getMobileActiveClass(
+                      "/scholarships"
+                    )} text-left`}
+                  >
+                    🎓 Học bổng
                   </Link>
 
                   <Link

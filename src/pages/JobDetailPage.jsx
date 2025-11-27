@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { mockJobs } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaGlobe } from "react-icons/fa";
+import SelectCVModal from "../components/SelectCVModal";
 
 function JobDetailPage() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ function JobDetailPage() {
 
   const { toast, showToast, hideToast } = useToast();
   const [job, setJob] = useState(null);
+  const [isSelectCVModalOpen, setIsSelectCVModalOpen] = useState(false);
 
   useEffect(() => {
     const foundJob = mockJobs.find((j) => j.id === parseInt(id));
@@ -37,7 +40,49 @@ function JobDetailPage() {
       return;
     }
 
+    // Check if user has CVs
+    const savedCVs = localStorage.getItem(`cvs_${user?.id}`);
+    if (!savedCVs || JSON.parse(savedCVs).length === 0) {
+      showToast("Bạn chưa có CV nào. Vui lòng tải lên hoặc tạo CV trước!", "warning");
+      setTimeout(() => {
+        navigate("/manage-cv");
+      }, 1500);
+      return;
+    }
+
+    // Open CV selection modal
+    setIsSelectCVModalOpen(true);
+  };
+
+  const handleCVSelected = (selectedCV, jobId) => {
+    // Here you can save the application to localStorage or send to backend
+    // For now, we'll just show a success message
     showToast("Ứng tuyển thành công! Chúng tôi sẽ liên hệ với bạn sớm.", "success");
+    
+    // You can save the application data here
+    // Example: Save to localStorage
+    const application = {
+      id: Date.now(),
+      jobId: jobId,
+      userId: user?.id,
+      userName: user?.name,
+      userEmail: user?.email,
+      cvId: selectedCV.id,
+      cvName: selectedCV.name,
+      appliedDate: new Date().toISOString(),
+      status: "pending",
+    };
+
+    // Load existing applications
+    const existingApplications = JSON.parse(
+      localStorage.getItem("jobApplications") || "[]"
+    );
+    
+    // Add new application
+    existingApplications.push(application);
+    
+    // Save back to localStorage
+    localStorage.setItem("jobApplications", JSON.stringify(existingApplications));
   };
 
   if (!job) {
@@ -158,6 +203,65 @@ function JobDetailPage() {
           </div>
         )}
 
+        {/* Contact Information */}
+        {(job.contact || job.address || job.email || job.website) && (
+          <div className="bg-white rounded-xl p-8 shadow-md mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Thông tin liên hệ
+            </h2>
+            <div className="space-y-4">
+              {job.contact && (
+                <div className="flex items-start gap-3">
+                  <FaPhone className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Số điện thoại</h4>
+                    <p className="text-gray-700">{job.contact}</p>
+                  </div>
+                </div>
+              )}
+              {job.address && (
+                <div className="flex items-start gap-3">
+                  <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Địa chỉ</h4>
+                    <p className="text-gray-700 whitespace-pre-line">{job.address}</p>
+                  </div>
+                </div>
+              )}
+              {job.email && (
+                <div className="flex items-start gap-3">
+                  <FaEnvelope className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
+                    <a
+                      href={`mailto:${job.email}`}
+                      className="text-purple-600 hover:text-purple-700 underline"
+                    >
+                      {job.email}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {job.website && (
+                <div className="flex items-start gap-3">
+                  <FaGlobe className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Website/Facebook</h4>
+                    <a
+                      href={job.website.startsWith("http") ? job.website : `https://${job.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 hover:text-purple-700 underline break-all"
+                    >
+                      {job.website}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Why This Job Is Suitable */}
         <div className="bg-purple-50 rounded-xl p-8 shadow-md mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -198,6 +302,14 @@ function JobDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Select CV Modal */}
+      <SelectCVModal
+        isOpen={isSelectCVModalOpen}
+        onClose={() => setIsSelectCVModalOpen(false)}
+        onSelect={handleCVSelected}
+        jobId={job?.id}
+      />
     </div>
   );
 }
