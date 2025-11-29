@@ -58,23 +58,19 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
     });
   };
 
-  const handleSkip = () => {
-    handleClose();
-  };
-
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+    <div
+      className="!fixed inset-0 !z-[99] flex items-center justify-center p-4 bg-white/40 backdrop-blur-sm"
       onClick={handleClose}
     >
-      <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
+      <div
+        className="bg-white rounded-2xl shadow-2xl shadow-amber-100/70 border border-amber-100 max-w-2xl w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <FaMapMarkerAlt className="w-6 h-6 text-purple-600" />
+            <FaMapMarkerAlt className="w-6 h-6 text-amber-600" />
             <h2 className="text-2xl font-bold text-gray-900">
               Thiết lập thông tin tìm việc
             </h2>
@@ -93,27 +89,35 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                 step >= 1
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-500 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
               {step > 1 ? <FaCheck className="w-4 h-4" /> : "1"}
             </div>
-            <div className={`w-12 h-1 ${step >= 2 ? "bg-purple-600" : "bg-gray-300"}`} />
+            <div
+              className={`w-12 h-1 ${
+                step >= 2 ? "bg-amber-500" : "bg-gray-300"
+              }`}
+            />
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                 step >= 2
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-500 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
               {step > 2 ? <FaCheck className="w-4 h-4" /> : "2"}
             </div>
-            <div className={`w-12 h-1 ${step >= 3 ? "bg-purple-600" : "bg-gray-300"}`} />
+            <div
+              className={`w-12 h-1 ${
+                step >= 3 ? "bg-amber-500" : "bg-gray-300"
+              }`}
+            />
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                 step >= 3
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-500 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
@@ -129,8 +133,8 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
               Bước 1: Chọn khu vực tìm việc
             </h3>
             <p className="text-gray-600 mb-6">
-              Vui lòng chọn khu vực bạn muốn tìm việc để chúng tôi có thể đề xuất
-              các công việc phù hợp nhất cho bạn.
+              Vui lòng chọn khu vực bạn muốn tìm việc để chúng tôi có thể đề
+              xuất các công việc phù hợp nhất cho bạn.
             </p>
             <div className="space-y-3">
               {regions.map((region) => (
@@ -139,14 +143,14 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                   onClick={() => setSelectedRegion(region.name)}
                   className={`w-full p-4 rounded-xl border-2 transition-all text-left cursor-pointer ${
                     selectedRegion === region.name
-                      ? "border-purple-600 bg-purple-50 shadow-md"
-                      : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/50"
+                      ? "border-amber-500 bg-amber-50 shadow-md"
+                      : "border-gray-200 hover:border-amber-300 hover:bg-amber-50/60"
                   }`}
                 >
                   <span
                     className={`text-lg font-semibold ${
                       selectedRegion === region.name
-                        ? "text-purple-700"
+                        ? "text-amber-700"
                         : "text-gray-700"
                     }`}
                   >
@@ -165,8 +169,8 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
               Bước 2: Chọn loại khuyết tật
             </h3>
             <p className="text-gray-600 mb-6">
-              Thông tin này giúp chúng tôi tìm công việc phù hợp nhất với khả năng
-              của bạn.
+              Thông tin này giúp chúng tôi tìm công việc phù hợp nhất với khả
+              năng của bạn.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {disabilityTypes.map((type) => (
@@ -175,8 +179,8 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                   onClick={() => setSelectedDisability(type)}
                   className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                     selectedDisability?.id === type.id
-                      ? "border-purple-600 bg-purple-50 scale-105"
-                      : "border-gray-300 hover:border-purple-300"
+                      ? "border-amber-500 bg-amber-50 scale-105"
+                      : "border-gray-300 hover:border-amber-300"
                   }`}
                 >
                   <div className="text-3xl mb-2">{type.icon}</div>
@@ -196,8 +200,8 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
               Bước 3: Chọn mức độ
             </h3>
             <p className="text-gray-600 mb-6">
-              Vui lòng chọn mức độ khuyết tật để chúng tôi có thể đề xuất công việc
-              phù hợp nhất.
+              Vui lòng chọn mức độ khuyết tật để chúng tôi có thể đề xuất công
+              việc phù hợp nhất.
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               {severityLevels.map((level) => (
@@ -206,8 +210,8 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                   onClick={() => setSelectedSeverity(level)}
                   className={`p-6 rounded-xl border-2 transition-all text-left cursor-pointer ${
                     selectedSeverity?.id === level.id
-                      ? "border-purple-600 bg-purple-50 scale-105"
-                      : "border-gray-300 hover:border-purple-300"
+                      ? "border-amber-500 bg-amber-50 scale-105"
+                      : "border-gray-300 hover:border-amber-300"
                   }`}
                 >
                   <h4 className="text-lg font-bold text-gray-900 mb-2">
@@ -243,7 +247,7 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   (step === 1 && selectedRegion) ||
                   (step === 2 && selectedDisability)
-                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg cursor-pointer"
+                    ? "bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white shadow-md hover:shadow-lg cursor-pointer animate-gradient-slide"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -255,7 +259,7 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                 disabled={!selectedSeverity}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   selectedSeverity
-                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg cursor-pointer"
+                    ? "bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white shadow-md hover:shadow-lg cursor-pointer animate-gradient-slide"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -270,4 +274,3 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
 }
 
 export default InitialPreferencesModal;
-

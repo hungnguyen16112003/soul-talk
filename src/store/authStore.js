@@ -40,8 +40,8 @@ const useAuthStore = create(
       },
 
       setUserPreferences: (preferences) => {
+        // Không persist preferences, chỉ lưu trong memory cho session hiện tại
         set({ userPreferences: preferences });
-        // Zustand persist sẽ tự động lưu vào localStorage với key "soul-talk-auth"
       },
 
       logout: () => {
@@ -57,12 +57,11 @@ const useAuthStore = create(
     {
       name: "soul-talk-auth", // localStorage key
       storage: createJSONStorage(() => localStorage),
-      // Chỉ lưu user, isAuthenticated, selectedRegion và userPreferences
+      // Chỉ lưu user, isAuthenticated, selectedRegion
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         selectedRegion: state.selectedRegion,
-        userPreferences: state.userPreferences,
       }),
     }
   )

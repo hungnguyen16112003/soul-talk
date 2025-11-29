@@ -457,7 +457,7 @@ function Header() {
 
                     {/* Dropdown Menu */}
                     {userMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                      <div className="absolute right-0 top-20 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
                         <div className="px-4 py-3 border-b border-gray-200">
                           <div className="flex items-center gap-3 mb-2">
                             {user?.avatar ? (
@@ -596,11 +596,22 @@ function Header() {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <nav className="md:hidden pb-4 animate-fade-in">
+            <nav className="md:hidden pb-4 mt-10 animate-fade-in">
               <div className="flex flex-col space-y-2">
                 {/* Menu cho Employer */}
                 {isAuthenticated && isEmployer ? (
                   <>
+                    <Link
+                      to="/"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaHome className="w-4 h-4 text-amber-600" />
+                      <span>Trang chủ</span>
+                    </Link>
+
                     <Link
                       to="/employer"
                       onClick={() => setIsMobileMenuOpen(false)}

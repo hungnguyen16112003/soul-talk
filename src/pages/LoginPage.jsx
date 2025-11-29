@@ -1,19 +1,14 @@
 // Trang đăng nhập
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
-import RegionSelectionModal from "../components/RegionSelectionModal";
 import { FaEye, FaEyeSlash, FaUserTie, FaBriefcase } from "react-icons/fa";
 
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  const setSelectedRegion = useAuthStore((state) => state.setSelectedRegion);
-  const setUserPreferences = useAuthStore((state) => state.setUserPreferences);
-  const userPreferences = useAuthStore((state) => state.userPreferences);
   const { toast, showToast, hideToast } = useToast();
-  const [showRegionModal, setShowRegionModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Dữ liệu đăng nhập mẫu (pre-filled)
@@ -75,46 +70,16 @@ function LoginPage() {
 
     // Nếu là người tìm việc
     if (formData.role === "jobseeker") {
-      // Kiểm tra xem có guest preferences không (đã chọn trước khi đăng nhập)
-      const guestPrefs = localStorage.getItem("guestPreferences");
-      
-      if (guestPrefs) {
-        try {
-          const prefs = JSON.parse(guestPrefs);
-          // Tự động chuyển guest preferences sang user preferences
-          setUserPreferences(prefs);
-          // Xóa guest preferences sau khi đã chuyển
-          localStorage.removeItem("guestPreferences");
-        } catch (e) {
-          console.error("Error parsing guest preferences:", e);
-        }
-      }
-      
-      // Nếu chưa có preferences (cả user và guest), hiển thị modal
-      if (!userPreferences && !guestPrefs) {
-        setTimeout(() => {
-          setShowRegionModal(true);
-        }, 1000);
-      } else {
-        // Đã có preferences, redirect luôn
-        setTimeout(() => {
-          navigate("/jobseeker");
-        }, 1000);
-      }
+      // Sau khi đăng nhập người tìm việc, chuyển thẳng đến trang tìm việc
+      setTimeout(() => {
+        navigate("/jobseeker");
+      }, 1000);
     } else {
       // Redirect cho nhà tuyển dụng
       setTimeout(() => {
         navigate("/employer");
       }, 1000);
     }
-  };
-
-  const handleRegionSelect = (region) => {
-    setSelectedRegion(region);
-    setShowRegionModal(false);
-    setTimeout(() => {
-      navigate("/jobseeker");
-    }, 300);
   };
 
   return (
@@ -125,12 +90,6 @@ function LoginPage() {
         type={toast.type}
         onClose={hideToast}
       />
-      <RegionSelectionModal
-        isOpen={showRegionModal}
-        onSelect={handleRegionSelect}
-        onClose={() => setShowRegionModal(false)}
-      />
-
       <div className="max-w-2xl w-full space-y-8 bg-white rounded-2xl shadow-lg p-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -163,9 +122,13 @@ function LoginPage() {
                     : "border-gray-300 text-gray-700 hover:border-gray-400"
                 }`}
               >
-                <FaUserTie className={`w-5 h-5 ${
-                  formData.role === "jobseeker" ? "text-purple-600" : "text-gray-500"
-                }`} />
+                <FaUserTie
+                  className={`w-5 h-5 ${
+                    formData.role === "jobseeker"
+                      ? "text-purple-600"
+                      : "text-gray-500"
+                  }`}
+                />
                 <span className="font-medium">Người Tìm Việc</span>
               </button>
               <button
@@ -177,9 +140,13 @@ function LoginPage() {
                     : "border-gray-300 text-gray-700 hover:border-gray-400"
                 }`}
               >
-                <FaBriefcase className={`w-5 h-5 ${
-                  formData.role === "employer" ? "text-purple-600" : "text-gray-500"
-                }`} />
+                <FaBriefcase
+                  className={`w-5 h-5 ${
+                    formData.role === "employer"
+                      ? "text-purple-600"
+                      : "text-gray-500"
+                  }`}
+                />
                 <span className="font-medium">Nhà Tuyển Dụng</span>
               </button>
             </div>

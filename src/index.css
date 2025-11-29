@@ -59,6 +59,19 @@ body {
   --gold-soft: #fde7c4;
 }
 
+/* Brand color utilities */
+.text-brand {
+  color: var(--gold-deep);
+}
+
+.bg-brand {
+  background-color: var(--gold-deep);
+}
+
+.border-brand {
+  border-color: var(--gold-deep);
+}
+
 .text-purple-600,
 .text-purple-700,
 .text-purple-500,
