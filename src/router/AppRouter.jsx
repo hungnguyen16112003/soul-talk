@@ -27,53 +27,28 @@ import ManageCVPage from "../pages/ManageCVPage";
 import InitialPreferencesModal from "../components/InitialPreferencesModal";
 import useAuthStore from "../store/authStore";
 
-// Chặn việc modal hiển thị 2 lần do React.StrictMode mount/effect 2 lần trong dev
-let hasOpenedPreferencesModalOnce = false;
-
 function AppRouter() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setUserPreferences = useAuthStore((state) => state.setUserPreferences);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
 
-  // Nếu chưa đăng nhập, mỗi lần reload trang ở một route khác thì đưa về trang chủ
   useEffect(() => {
-    if (!isAuthenticated) {
-      try {
-        const navEntries = performance.getEntriesByType
-          ? performance.getEntriesByType("navigation")
-          : [];
-        const navType = navEntries && navEntries[0]?.type;
-
-        if (navType === "reload" && window.location.pathname !== "/") {
-          window.location.replace("/");
-        }
-      } catch (e) {
-        // Bỏ qua nếu browser không hỗ trợ PerformanceNavigationTiming
-      }
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      if (!hasOpenedPreferencesModalOnce) {
-        setShowPreferencesModal(true);
-        hasOpenedPreferencesModalOnce = true;
-      }
-    } else {
-      setShowPreferencesModal(false);
-    }
+    let timeoutId;
+    timeoutId = setTimeout(() => {
+      setShowPreferencesModal(!isAuthenticated);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [isAuthenticated]);
 
   const handleGlobalPreferencesComplete = (prefs) => {
-    if (prefs && (prefs.region || prefs.disabilityType || prefs.severityLevel)) {
+    if (
+      prefs &&
+      (prefs.region || prefs.disabilityType || prefs.severityLevel)
+    ) {
       // Lưu preferences vào global store cho cả guest và user đăng nhập
       setUserPreferences(prefs);
     }
     setShowPreferencesModal(false);
-    // Sau khi chọn xong khi chưa đăng nhập, đưa người dùng về trang chủ
-    if (!isAuthenticated && window.location.pathname !== "/") {
-      window.location.href = "/";
-    }
   };
 
   return (
@@ -109,10 +84,7 @@ function AppRouter() {
           <Route path="/charity" element={<CharityPage />} />
           <Route path="/charity/:id" element={<CharityDetailPage />} />
           <Route path="/scholarships" element={<ScholarshipPage />} />
-          <Route
-            path="/scholarships/:id"
-            element={<ScholarshipDetailPage />}
-          />
+          <Route path="/scholarships/:id" element={<ScholarshipDetailPage />} />
           <Route path="/healthcare" element={<HealthCarePage />} />
           <Route path="/healthcare/:id" element={<HealthCareDetailPage />} />
           <Route path="/career-guidance" element={<CareerGuidancePage />} />
