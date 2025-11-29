@@ -169,7 +169,7 @@ function JobDetailPage() {
           {job.status === "active" && (
             <button
               onClick={handleApply}
-              className="w-full md:w-auto bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:shadow-lg transition-all font-semibold text-lg cursor-pointer"
+              className="w-full md:w-auto animate-gradient-slide text-white px-8 py-3 rounded-lg shadow-md hover:shadow-xl transition-all font-semibold text-lg cursor-pointer"
             >
               Ứng tuyển ngay
             </button>
@@ -295,7 +295,7 @@ function JobDetailPage() {
           <div className="bg-white rounded-xl p-6 shadow-md sticky bottom-4">
             <button
               onClick={handleApply}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg hover:shadow-lg transition-all font-semibold text-lg cursor-pointer"
+              className="w-full animate-gradient-slide text-white px-8 py-4 rounded-lg shadow-md hover:shadow-xl transition-all font-semibold text-lg cursor-pointer"
             >
               Ứng tuyển ngay
             </button>
