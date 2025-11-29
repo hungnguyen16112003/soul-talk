@@ -19,9 +19,15 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
             {job.title}
           </h3>
           <p className="text-purple-600 font-medium mb-2">{job.company}</p>
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-2">
-            <span>📍 {job.location}</span>
-            <span>💰 {job.salary}</span>
+          <div className="space-y-2 text-sm text-gray-600 mb-2">
+            <div className="flex items-center gap-2 w-full">
+              <span>📍</span>
+              <span className="flex-1 break-words">{job.location}</span>
+            </div>
+            <div className="flex items-center gap-2 w-full">
+              <span>💰</span>
+              <span className="flex-1 break-words">{job.salary}</span>
+            </div>
           </div>
           {job.disabilityTypes && job.disabilityTypes.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
