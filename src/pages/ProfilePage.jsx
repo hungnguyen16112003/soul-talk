@@ -131,7 +131,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -144,7 +144,7 @@ function ProfilePage() {
         <div className="mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="mb-4 text-purple-600 hover:text-purple-700 font-medium flex items-center gap-2 cursor-pointer"
+            className="mb-4 text-amber-600 hover:text-amber-700 font-medium flex items-center gap-2 cursor-pointer"
           >
             ← Quay lại
           </button>
@@ -181,13 +181,13 @@ function ProfilePage() {
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
               )}
               <button
                 onClick={handleAvatarClick}
-                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
+                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
                 title="Cập nhật ảnh đại diện"
               >
                 <FaCamera className="w-4 h-4" />
@@ -204,7 +204,7 @@ function ProfilePage() {
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">
                 {user?.name || "Chưa có tên"}
               </h2>
-              <p className="text-purple-600 font-medium mb-1">
+              <p className="text-amber-600 font-medium mb-1">
                 {user?.role === "employer"
                   ? "Nhà tuyển dụng"
                   : "Người tìm việc"}
@@ -214,7 +214,7 @@ function ProfilePage() {
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="w-full sm:w-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer whitespace-nowrap"
+                className="w-full sm:w-auto px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer whitespace-nowrap"
               >
                 Chỉnh sửa
               </button>
@@ -234,7 +234,7 @@ function ProfilePage() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
                     placeholder="Nhập họ và tên"
                   />
                 ) : (
@@ -254,7 +254,7 @@ function ProfilePage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
                     placeholder="Nhập email"
                   />
                 ) : (
@@ -274,7 +274,7 @@ function ProfilePage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
                     placeholder="Nhập số điện thoại"
                   />
                 ) : (
@@ -303,7 +303,7 @@ function ProfilePage() {
               <div className="flex gap-4 pt-4 border-t border-gray-200">
                 <button
                   onClick={handleSave}
-                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer"
+                  className="px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer"
                 >
                   Lưu thay đổi
                 </button>
@@ -365,7 +365,7 @@ function ProfilePage() {
               </div>
               <button
                 onClick={() => navigate("/onboarding")}
-                className="text-purple-600 hover:text-purple-700 font-medium text-sm cursor-pointer"
+                className="text-amber-600 hover:text-amber-700 font-medium text-sm cursor-pointer"
               >
                 Cập nhật hồ sơ tìm việc →
               </button>

@@ -130,7 +130,7 @@ function EmployerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -138,7 +138,7 @@ function EmployerPage() {
         onClose={hideToast}
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Welcome Banner */}
         <div className="animate-gradient-slide rounded-xl p-8 text-white mb-8 shadow-lg overflow-hidden">
           <h1 className="text-3xl font-bold mb-2">

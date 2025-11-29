@@ -56,11 +56,59 @@ function JobSeekerPage() {
   const [jobs] = useState(mockJobs);
   const [filteredJobs, setFilteredJobs] = useState(mockJobs);
   
+  // Hàm phân loại ngành nghề
+  const getJobCategory = (job) => {
+    const title = job.title.toLowerCase();
+    const description = job.description.toLowerCase();
+    const combined = title + " " + description;
+    
+    if (
+      combined.includes("lập trình") ||
+      combined.includes("công nghệ") ||
+      combined.includes("phần mềm") ||
+      combined.includes("máy tính") ||
+      combined.includes("vi tính")
+    ) {
+      return "Công nghệ";
+    }
+    if (
+      combined.includes("dạy") ||
+      combined.includes("giáo dục") ||
+      combined.includes("học") ||
+      combined.includes("tuyển sinh") ||
+      combined.includes("đào tạo")
+    ) {
+      return "Giáo dục";
+    }
+    if (
+      combined.includes("may") ||
+      combined.includes("điêu khắc") ||
+      combined.includes("chạm trổ") ||
+      combined.includes("lao động phổ thông") ||
+      combined.includes("vận hành") ||
+      combined.includes("quản lý kho") ||
+      combined.includes("thủ công")
+    ) {
+      return "Lao động tay chân";
+    }
+    return "Khác";
+  };
+
+  // Danh sách ngành nghề
+  const jobCategories = [
+    { value: "", label: "Tất cả ngành nghề" },
+    { value: "Công nghệ", label: "Công nghệ" },
+    { value: "Giáo dục", label: "Giáo dục" },
+    { value: "Lao động tay chân", label: "Lao động tay chân" },
+    { value: "Khác", label: "Khác" },
+  ];
+
   // Khởi tạo filters từ preferences hoặc profile
   const [filters, setFilters] = useState(() => {
     const prefs = preferences || userPreferences;
     return {
       search: "",
+      category: "",
       disabilityType: prefs?.disabilityType || profile?.disabilityType || "",
       severityLevel: prefs?.severityLevel || profile?.severityLevel || "",
       location: prefs?.region || "",
@@ -105,6 +153,11 @@ function JobSeekerPage() {
       );
     }
 
+    // Filter by category
+    if (filters.category) {
+      result = result.filter((job) => getJobCategory(job) === filters.category);
+    }
+
     // Filter by disability type
     if (filters.disabilityType) {
       result = result.filter((job) =>
@@ -141,6 +194,7 @@ function JobSeekerPage() {
     const prefs = preferences || userPreferences;
     setFilters({
       search: "",
+      category: "",
       disabilityType: "",
       severityLevel: "",
       location: prefs?.region || "",
@@ -187,13 +241,13 @@ function JobSeekerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <InitialPreferencesModal
         isOpen={showPreferencesModal}
         onComplete={handlePreferencesComplete}
         onClose={() => setShowPreferencesModal(false)}
       />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Tìm việc làm</h1>
@@ -204,7 +258,7 @@ function JobSeekerPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-xl p-6 shadow-md mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -215,8 +269,26 @@ function JobSeekerPage() {
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
                 placeholder="Tên công việc, công ty..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
               />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ngành nghề
+              </label>
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange("category", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              >
+                {jobCategories.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Disability Type */}
@@ -229,7 +301,7 @@ function JobSeekerPage() {
                 onChange={(e) =>
                   handleFilterChange("disabilityType", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="">Tất cả</option>
                 {disabilityTypes.map((type) => (
@@ -250,7 +322,7 @@ function JobSeekerPage() {
                 onChange={(e) =>
                   handleFilterChange("severityLevel", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="">Tất cả</option>
                 {severityLevels.map((level) => (
@@ -269,7 +341,7 @@ function JobSeekerPage() {
               <select
                 value={filters.location}
                 onChange={(e) => handleFilterChange("location", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="">Tất cả địa điểm</option>
                 <option value="Miền Bắc">Miền Bắc</option>
@@ -281,13 +353,14 @@ function JobSeekerPage() {
 
           {/* Clear filters button */}
           {(filters.search ||
+            filters.category ||
             filters.disabilityType ||
             filters.severityLevel ||
             filters.location) && (
             <div className="mt-4">
               <button
                 onClick={clearFilters}
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium cursor-pointer"
+                className="text-amber-600 hover:text-amber-700 text-sm font-medium cursor-pointer"
               >
                 Xóa bộ lọc
               </button>
@@ -317,7 +390,7 @@ function JobSeekerPage() {
             </p>
             <button
               onClick={clearFilters}
-              className="text-purple-600 hover:text-purple-700 font-medium"
+              className="text-amber-600 hover:text-amber-700 font-medium"
             >
               Xóa bộ lọc để xem tất cả
             </button>

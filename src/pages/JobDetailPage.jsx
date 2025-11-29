@@ -22,7 +22,7 @@ function JobDetailPage() {
     if (foundJob) {
       setJob(foundJob);
     } else {
-      navigate("/");
+      navigate("/jobseeker");
     }
   }, [id, navigate]);
 
@@ -87,14 +87,14 @@ function JobDetailPage() {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="page-wrapper min-h-screen flex items-center justify-center">
         <p className="text-gray-600">Đang tải...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}

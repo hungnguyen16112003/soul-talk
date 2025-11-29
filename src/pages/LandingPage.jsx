@@ -6,7 +6,7 @@ function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+    <div className="page-wrapper min-h-screen">
       <Header />
 
       <div className="flex items-center justify-center min-h-screen px-4">
@@ -41,7 +41,7 @@ function LandingPage() {
 
             {/* Người Tìm Việc Card */}
             <div
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/jobseeker")}
               className="group bg-white rounded-3xl p-8 md:p-10 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-purple-100 hover:border-purple-500 animate-fade-in"
             >
               <div className="flex justify-center mb-4">

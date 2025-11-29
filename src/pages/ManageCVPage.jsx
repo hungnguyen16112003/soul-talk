@@ -294,7 +294,7 @@ function ManageCVPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -302,17 +302,17 @@ function ManageCVPage() {
         onClose={hideToast}
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="mb-4 text-purple-600 hover:text-purple-700 font-medium flex items-center gap-2 cursor-pointer"
+            className="mb-4 text-amber-600 hover:text-amber-700 font-medium flex items-center gap-2 cursor-pointer"
           >
             ← Quay lại
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-            <FaFilePdf className="w-8 h-8 text-purple-600" />
+            <FaFilePdf className="w-8 h-8 text-amber-600" />
             Quản lý CV
           </h1>
           <p className="text-gray-600">
@@ -328,9 +328,9 @@ function ManageCVPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center hover:bg-purple-50 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-amber-300 rounded-xl p-8 text-center hover:bg-amber-50 transition-colors cursor-pointer"
             >
-              <FaUpload className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+              <FaUpload className="w-12 h-12 text-amber-600 mx-auto mb-4" />
               <p className="text-gray-700 font-medium mb-2">
                 Tải lên CV
               </p>

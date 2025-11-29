@@ -1,4 +1,4 @@
-// Trang từ thiện
+// Trang hỗ trợ khác
 import { useNavigate } from "react-router-dom";
 import { charityPrograms } from "../data/mockData";
 
@@ -10,11 +10,11 @@ function CharityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="page-wrapper min-h-screen py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            💝 Chương trình từ thiện
+            💝 Hỗ trợ khác
           </h1>
           <p className="text-gray-600">
             Các chương trình hỗ trợ dành cho người khuyết tật

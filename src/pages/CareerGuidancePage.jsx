@@ -15,12 +15,14 @@ function CareerGuidancePage() {
   // Filter articles by location
   const filteredArticles = useMemo(() => {
     if (!locationFilter) return careerGuidanceArticles;
-    return careerGuidanceArticles.filter((article) => article.location === locationFilter);
+    return careerGuidanceArticles.filter(
+      (article) => article.location === locationFilter
+    );
   }, [locationFilter]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="page-wrapper min-h-screen py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             🎯 Hướng nghiệp
@@ -33,7 +35,9 @@ function CareerGuidancePage() {
         {/* Filter */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-4 items-center">
-            <label className="text-sm font-medium text-gray-700">Lọc theo khu vực:</label>
+            <label className="text-sm font-medium text-gray-700">
+              Lọc theo khu vực:
+            </label>
             <select
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
@@ -72,12 +76,16 @@ function CareerGuidancePage() {
                   )}
                   {article.address && (
                     <p className="text-sm text-gray-600 line-clamp-1">
-                      🏢 {article.address.split('\n')[0].trim()}
+                      🏢 {article.address.split("\n")[0].trim()}
                     </p>
                   )}
                   {article.contact && (
                     <p className="text-sm text-gray-600 line-clamp-1">
-                      📞 {article.contact.split(' – ')[0].split(' hoặc ')[0].trim()}
+                      📞{" "}
+                      {article.contact
+                        .split(" – ")[0]
+                        .split(" hoặc ")[0]
+                        .trim()}
                     </p>
                   )}
                 </div>
@@ -96,4 +104,3 @@ function CareerGuidancePage() {
 }
 
 export default CareerGuidancePage;
-

@@ -10,7 +10,7 @@ function CareerGuidanceDetailPage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+      <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài viết</h1>
           <button
@@ -25,7 +25,7 @@ function CareerGuidanceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header với nút quay lại */}
         <div className="mb-6">
@@ -155,4 +155,5 @@ function CareerGuidanceDetailPage() {
 }
 
 export default CareerGuidanceDetailPage;
+
 

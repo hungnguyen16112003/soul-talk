@@ -1,6 +1,6 @@
 // Component Header dùng chung cho các trang
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   FaUser,
   FaChartBar,
@@ -9,6 +9,13 @@ import {
   FaSignOutAlt,
   FaChevronDown,
   FaFilePdf,
+  FaHome,
+  FaBriefcase,
+  FaHeart,
+  FaGraduationCap,
+  FaHospital,
+  FaBullseye,
+  FaComments,
 } from "react-icons/fa";
 import useAuthStore from "../store/authStore";
 
@@ -23,12 +30,24 @@ function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const navRef = useRef(null);
   const linkRefs = useRef({});
   const indicatorRef = useRef(null);
   const userMenuRef = useRef(null);
   const mobileUserMenuRef = useRef(null);
   const moreMenuRef = useRef(null);
+
+  // Lắng nghe cuộn để làm header trong suốt hơn khi scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsHeaderScrolled(window.scrollY > 10);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -73,31 +92,37 @@ function Header() {
   }, [moreMenuOpen]);
 
   // Kiểm tra route active
-  const isActive = (path) => {
-    if (path === "/") {
-      return location.pathname === "/" || location.pathname === "/jobseeker";
-    }
-    return location.pathname.startsWith(path);
-  };
+  const isActive = useCallback(
+    (path) => {
+      if (path === "/") {
+        return location.pathname === "/";
+      }
+      if (path === "/jobseeker") {
+        return (
+          location.pathname === "/jobseeker" ||
+          location.pathname.startsWith("/job")
+        );
+      }
+      return location.pathname.startsWith(path);
+    },
+    [location.pathname]
+  );
 
   // Cập nhật indicator position
   useEffect(() => {
     const updateIndicator = () => {
       if (!indicatorRef.current || !navRef.current) return;
 
-      const activeLink = Object.values(linkRefs.current).find((link) => {
-        if (!link) return false;
-        const path = link.getAttribute("href");
-        if (!path) return false;
-        if (path === "/") {
-          return (
-            location.pathname === "/" || location.pathname === "/jobseeker"
-          );
+      const activeLink = Object.entries(linkRefs.current).find(
+        ([path, link]) => {
+          if (!link) return false;
+          return isActive(path);
         }
-        return location.pathname.startsWith(path);
-      });
+      );
 
-      if (!activeLink) {
+      const activeElement = activeLink ? activeLink[1] : null;
+
+      if (!activeElement) {
         indicatorRef.current.style.transition =
           "width 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease";
         indicatorRef.current.style.opacity = "0";
@@ -106,7 +131,7 @@ function Header() {
       }
 
       const navRect = navRef.current.getBoundingClientRect();
-      const linkRect = activeLink.getBoundingClientRect();
+      const linkRect = activeElement.getBoundingClientRect();
 
       const newLeft = linkRect.left - navRect.left;
       const newWidth = linkRect.width;
@@ -155,14 +180,14 @@ function Header() {
       clearTimeout(timeoutId);
       window.removeEventListener("resize", updateIndicator);
     };
-  }, [location.pathname, isAuthenticated, isEmployer]);
+  }, [location.pathname, isAuthenticated, isEmployer, isActive]);
 
   const getActiveClass = (path) => {
     const baseClass =
       "relative px-4 py-2 rounded-full font-medium z-10 transition-colors duration-200";
     const activeClass = isActive(path)
       ? "text-white font-semibold"
-      : "text-gray-700 hover:text-purple-600";
+      : "text-gray-700 hover:text-amber-700";
 
     return `${baseClass} ${activeClass}`;
   };
@@ -172,401 +197,71 @@ function Header() {
       "relative px-4 py-2 rounded-full font-medium z-10 transition-all duration-200";
     const activeClass = isActive(path)
       ? "text-white font-semibold animate-gradient-slide"
-      : "text-gray-700 hover:text-purple-600 hover:bg-purple-50";
+      : "text-gray-700 hover:text-amber-700 hover:bg-amber-50";
 
     return `${baseClass} ${activeClass}`;
   };
 
+  const sloganTexts = [
+    "🌱 EqualHire - Kết nối cơ hội, truyền cảm hứng vượt lên giới hạn",
+    "🤝 Đồng hành cùng người khuyết tật Việt Nam chinh phục ước mơ",
+    "🚀 Việc làm, học bổng, sức khỏe & cộng đồng hỗ trợ khắp 63 tỉnh thành",
+  ];
+
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Soul Talk
-            </h1>
-          </Link>
+    <>
+      <header
+        className={`!fixed !z-2 top-0 inset-x-0 z-50 border-b border-gray-200 transition-all duration-300 ${
+          isHeaderScrolled
+            ? "bg-white/50 backdrop-blur-md shadow-sm"
+            : "bg-white/95 backdrop-blur"
+        }`}
+      >
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <img
+                src="/equalhireLogo-removebg.png"
+                alt="EqualHire"
+                className="!h-12 sm:h-12 w-auto object-fit flex items-center"
+              />
+            </Link>
 
-          {/* Desktop Menu */}
-          <nav
-            ref={navRef}
-            className="hidden md:flex items-center space-x-2 relative"
-          >
-            {/* Sliding background indicator */}
-            <div
-              ref={indicatorRef}
-              className="absolute h-10 rounded-full animate-gradient-slide z-0 pointer-events-none"
-              style={{
-                width: 0,
-                opacity: 0,
-                transform: "translateX(0)",
-                transition:
-                  "width 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease",
-                willChange: "transform, width",
-              }}
-            />
-
-            {/* Menu cho Employer - chỉ hiển thị Quản lý tin và Hỏi đáp */}
-            {isAuthenticated && isEmployer ? (
-              <>
-                <Link
-                  ref={(el) => (linkRefs.current["/employer"] = el)}
-                  to="/employer"
-                  className={getActiveClass("/employer")}
-                >
-                  Quản lý tin
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/review-faq"] = el)}
-                  to="/review-faq"
-                  className={getActiveClass("/review-faq")}
-                >
-                  Hỏi đáp
-                </Link>
-              </>
-            ) : (
-              <>
-                {/* Menu cho người tìm việc hoặc chưa đăng nhập */}
-                <Link
-                  ref={(el) => (linkRefs.current["/"] = el)}
-                  to="/"
-                  className={getActiveClass("/")}
-                >
-                  Tìm việc
-                </Link>
-
-                {/* Các mục phụ - chỉ hiển thị trên desktop (lg+) */}
-                <Link
-                  ref={(el) => (linkRefs.current["/charity"] = el)}
-                  to="/charity"
-                  className={`${getActiveClass("/charity")} hidden lg:block`}
-                >
-                  💝 Từ thiện
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/scholarships"] = el)}
-                  to="/scholarships"
-                  className={`${getActiveClass(
-                    "/scholarships"
-                  )} hidden lg:block`}
-                >
-                  🎓 Học bổng
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/healthcare"] = el)}
-                  to="/healthcare"
-                  className={`${getActiveClass("/healthcare")} hidden lg:block`}
-                >
-                  🏥 Sức khỏe
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/career-guidance"] = el)}
-                  to="/career-guidance"
-                  className={`${getActiveClass(
-                    "/career-guidance"
-                  )} hidden lg:block`}
-                >
-                  🎯 Hướng nghiệp
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/success-stories"] = el)}
-                  to="/success-stories"
-                  className={`${getActiveClass(
-                    "/success-stories"
-                  )} hidden lg:block`}
-                >
-                  🌟 Câu chuyện
-                </Link>
-
-                <Link
-                  ref={(el) => (linkRefs.current["/review-faq"] = el)}
-                  to="/review-faq"
-                  className={`${getActiveClass("/review-faq")} hidden lg:block`}
-                >
-                  💬 Hỏi đáp
-                </Link>
-
-                {/* Dropdown "Khác" cho tablet - hiển thị từ md đến lg */}
-                <div className="md:block lg:hidden relative" ref={moreMenuRef}>
-                  <button
-                    ref={(el) => {
-                      if (
-                        isActive("/charity") ||
-                        isActive("/scholarships") ||
-                        isActive("/healthcare") ||
-                        isActive("/career-guidance") ||
-                        isActive("/success-stories") ||
-                        isActive("/review-faq")
-                      ) {
-                        linkRefs.current["/more"] = el;
-                      }
-                    }}
-                    onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                    className={`relative px-4 py-2 rounded-full font-medium z-10 transition-all duration-200 cursor-pointer flex items-center gap-2 ${
-                      isActive("/charity") ||
-                      isActive("/scholarships") ||
-                      isActive("/healthcare") ||
-                      isActive("/career-guidance") ||
-                      isActive("/success-stories") ||
-                      isActive("/review-faq")
-                        ? "text-white font-semibold animate-gradient-slide"
-                        : "text-gray-700 hover:text-purple-600"
-                    }`}
-                  >
-                    <span>Khác</span>
-                    <FaChevronDown
-                      className={`w-3 h-3 transition-transform duration-200 ${
-                        moreMenuOpen ? "transform rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* Dropdown menu */}
-                  {moreMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                      <Link
-                        to="/charity"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        💝 Từ thiện
-                      </Link>
-                      <Link
-                        to="/scholarships"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        🎓 Học bổng
-                      </Link>
-                      <Link
-                        to="/healthcare"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        🏥 Sức khỏe
-                      </Link>
-                      <Link
-                        to="/career-guidance"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        🎯 Hướng nghiệp
-                      </Link>
-                      <Link
-                        to="/success-stories"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        🌟 Câu chuyện
-                      </Link>
-                      <Link
-                        to="/review-faq"
-                        onClick={() => setMoreMenuOpen(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        💬 Hỏi đáp
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            <div className="flex items-center space-x-2 ml-2 relative">
-              {isAuthenticated ? (
-                <div className="relative" ref={userMenuRef}>
-                  {/* User Avatar Button */}
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-purple-50 transition-colors cursor-pointer"
-                  >
-                    {user?.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt="Avatar"
-                        className="w-8 h-8 rounded-full object-cover border-2 border-purple-600"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {user?.name?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    )}
-                    <span className="text-sm font-semibold text-gray-700 hidden sm:block">
-                      {user?.name?.split(" ").pop() || "User"}
-                    </span>
-                    <FaChevronDown
-                      className={`w-3 h-3 text-gray-600 transition-transform ${
-                        userMenuOpen ? "transform rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                      <div className="px-4 py-3 border-b border-gray-200">
-                        <div className="flex items-center gap-3 mb-2">
-                          {user?.avatar ? (
-                            <img
-                              src={user.avatar}
-                              alt="Avatar"
-                              className="w-10 h-10 rounded-full object-cover border-2 border-purple-600"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                              {user?.name?.charAt(0).toUpperCase() || "U"}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
-                              {user?.name}
-                            </p>
-                            <p className="text-xs text-gray-600 truncate">
-                              {user?.email}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-purple-600">
-                          {user?.role === "employer"
-                            ? "Nhà tuyển dụng"
-                            : "Người tìm việc"}
-                        </p>
-                      </div>
-                      <Link
-                        to="/profile"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                      >
-                        <FaUser className="w-4 h-4" />
-                        <span>Thông tin tài khoản</span>
-                      </Link>
-                      {isEmployer ? (
-                        <>
-                          <Link
-                            to="/employer/dashboard"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                          >
-                            <FaChartBar className="w-4 h-4" />
-                            <span>Dashboard</span>
-                          </Link>
-                          <Link
-                            to="/employer/applications"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                          >
-                            <FaFileAlt className="w-4 h-4" />
-                            <span>Đơn ứng tuyển</span>
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            to="/onboarding"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                          >
-                            <FaEdit className="w-4 h-4" />
-                            <span>Cập nhật hồ sơ</span>
-                          </Link>
-                          <Link
-                            to="/manage-cv"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                          >
-                            <FaFilePdf className="w-4 h-4" />
-                            <span>Quản lý CV</span>
-                          </Link>
-                        </>
-                      )}
-                      <div className="border-t border-gray-200 mt-2 pt-2">
-                        <button
-                          onClick={() => {
-                            logout();
-                            setUserMenuOpen(false);
-                            window.location.href = "/";
-                          }}
-                          className="w-full flex items-center gap-2 text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
-                        >
-                          <FaSignOutAlt className="w-4 h-4" />
-                          <span>Đăng xuất</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <Link
-                    ref={(el) => (linkRefs.current["/login"] = el)}
-                    to="/login"
-                    className={getActiveClass("/login")}
-                  >
-                    Đăng nhập
-                  </Link>
-
-                  <Link
-                    ref={(el) => (linkRefs.current["/register"] = el)}
-                    to="/register"
-                    className={getActiveClass("/register", true)}
-                  >
-                    Đăng ký
-                  </Link>
-                </>
-              )}
-            </div>
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-700 hover:text-purple-600 cursor-pointer"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            {/* Desktop Menu */}
+            <nav
+              ref={navRef}
+              className="hidden md:flex items-center space-x-2 relative"
             >
-              {isMobileMenuOpen ? (
-                <path d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
+              {/* Sliding background indicator */}
+              <div
+                ref={indicatorRef}
+                className="absolute h-10 rounded-full animate-gradient-slide z-0 pointer-events-none"
+                style={{
+                  width: 0,
+                  opacity: 0,
+                  transform: "translateX(0)",
+                  transition:
+                    "width 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease",
+                  willChange: "transform, width",
+                }}
+              />
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <nav className="md:hidden pb-4 animate-fade-in">
-            <div className="flex flex-col space-y-2">
-              {/* Menu cho Employer */}
+              {/* Menu cho Employer - chỉ hiển thị Quản lý tin và Hỏi đáp */}
               {isAuthenticated && isEmployer ? (
                 <>
                   <Link
+                    ref={(el) => (linkRefs.current["/employer"] = el)}
                     to="/employer"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass("/employer")} text-left`}
+                    className={getActiveClass("/employer")}
                   >
                     Quản lý tin
                   </Link>
 
                   <Link
+                    ref={(el) => (linkRefs.current["/review-faq"] = el)}
                     to="/review-faq"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
-                      "/review-faq"
-                    )} text-left`}
+                    className={getActiveClass("/review-faq")}
                   >
                     Hỏi đáp
                   </Link>
@@ -575,157 +270,246 @@ function Header() {
                 <>
                   {/* Menu cho người tìm việc hoặc chưa đăng nhập */}
                   <Link
+                    ref={(el) => (linkRefs.current["/"] = el)}
                     to="/"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass("/")} text-left`}
+                    className={getActiveClass("/")}
                   >
+                    <FaHome className="inline-block w-4 h-4 mr-1.5 text-amber-600" />
+                    Trang chủ
+                  </Link>
+
+                  <Link
+                    ref={(el) => (linkRefs.current["/jobseeker"] = el)}
+                    to="/jobseeker"
+                    className={getActiveClass("/jobseeker")}
+                  >
+                    <FaBriefcase className="inline-block w-4 h-4 mr-1.5 text-blue-600" />
                     Tìm việc
                   </Link>
 
+                  {/* Các mục phụ - chỉ hiển thị trên desktop (lg+) */}
                   <Link
+                    ref={(el) => (linkRefs.current["/charity"] = el)}
                     to="/charity"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass("/charity")} text-left`}
+                    className={`${getActiveClass("/charity")} hidden lg:block`}
                   >
-                    💝 Từ thiện
+                    <FaHeart className="inline-block w-4 h-4 mr-1.5 text-red-500" />
+                    Hỗ trợ khác
                   </Link>
 
                   <Link
+                    ref={(el) => (linkRefs.current["/scholarships"] = el)}
                     to="/scholarships"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
+                    className={`${getActiveClass(
                       "/scholarships"
-                    )} text-left`}
+                    )} hidden lg:block`}
                   >
-                    🎓 Học bổng
+                    <FaGraduationCap className="inline-block w-4 h-4 mr-1.5 text-purple-600" />
+                    Học bổng
                   </Link>
 
                   <Link
+                    ref={(el) => (linkRefs.current["/healthcare"] = el)}
                     to="/healthcare"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
+                    className={`${getActiveClass(
                       "/healthcare"
-                    )} text-left`}
+                    )} hidden lg:block`}
                   >
-                    🏥 Sức khỏe
+                    <FaHospital className="inline-block w-4 h-4 mr-1.5 text-green-600" />
+                    Sức khỏe
                   </Link>
 
                   <Link
+                    ref={(el) => (linkRefs.current["/career-guidance"] = el)}
                     to="/career-guidance"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
+                    className={`${getActiveClass(
                       "/career-guidance"
-                    )} text-left`}
+                    )} hidden lg:block`}
                   >
-                    🎯 Hướng nghiệp
+                    <FaBullseye className="inline-block w-4 h-4 mr-1.5 text-orange-600" />
+                    Hướng nghiệp
                   </Link>
 
                   <Link
-                    to="/success-stories"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
-                      "/success-stories"
-                    )} text-left`}
-                  >
-                    🌟 Câu chuyện
-                  </Link>
-
-                  <Link
+                    ref={(el) => (linkRefs.current["/review-faq"] = el)}
                     to="/review-faq"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${getMobileActiveClass(
+                    className={`${getActiveClass(
                       "/review-faq"
-                    )} text-left`}
+                    )} hidden lg:block`}
                   >
-                    💬 Hỏi đáp
+                    <FaComments className="inline-block w-4 h-4 mr-1.5 text-cyan-600" />
+                    Hỏi đáp
                   </Link>
+
+                  {/* Dropdown "Khác" cho tablet - hiển thị từ md đến lg */}
+                  <div
+                    className="md:block lg:hidden relative"
+                    ref={moreMenuRef}
+                  >
+                    <button
+                      ref={(el) => {
+                        if (
+                          isActive("/charity") ||
+                          isActive("/scholarships") ||
+                          isActive("/healthcare") ||
+                          isActive("/career-guidance") ||
+                          isActive("/review-faq")
+                        ) {
+                          linkRefs.current["/more"] = el;
+                        }
+                      }}
+                      onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                      className={`relative px-4 py-2 rounded-full font-medium z-10 transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+                        isActive("/charity") ||
+                        isActive("/scholarships") ||
+                        isActive("/healthcare") ||
+                        isActive("/career-guidance") ||
+                        isActive("/review-faq")
+                          ? "text-white font-semibold animate-gradient-slide"
+                          : "text-gray-700 hover:text-amber-700"
+                      }`}
+                    >
+                      <span>Khác</span>
+                      <FaChevronDown
+                        className={`w-3 h-3 transition-transform duration-200 ${
+                          moreMenuOpen ? "transform rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {moreMenuOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                        <Link
+                          to="/charity"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaHeart className="w-4 h-4 text-red-500" />
+                          <span>Hỗ trợ khác</span>
+                        </Link>
+                        <Link
+                          to="/scholarships"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaGraduationCap className="w-4 h-4 text-purple-600" />
+                          <span>Học bổng</span>
+                        </Link>
+                        <Link
+                          to="/healthcare"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaHospital className="w-4 h-4 text-green-600" />
+                          <span>Sức khỏe</span>
+                        </Link>
+                        <Link
+                          to="/career-guidance"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaBullseye className="w-4 h-4 text-orange-600" />
+                          <span>Hướng nghiệp</span>
+                        </Link>
+                        <Link
+                          to="/review-faq"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaComments className="w-4 h-4 text-cyan-600" />
+                          <span>Hỏi đáp</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
-              <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center space-x-2 ml-2 relative">
                 {isAuthenticated ? (
-                  <div className="relative" ref={mobileUserMenuRef}>
-                    {/* User Button - tương tự desktop */}
+                  <div className="relative" ref={userMenuRef}>
+                    {/* User Avatar Button */}
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-purple-50 transition-colors cursor-pointer text-left"
+                      className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-amber-50 transition-colors cursor-pointer"
                     >
                       {user?.avatar ? (
                         <img
                           src={user.avatar}
                           alt="Avatar"
-                          className="w-10 h-10 rounded-full object-cover border-2 border-purple-600"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-amber-600"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
                           {user?.name?.charAt(0).toUpperCase() || "U"}
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {user?.name}
-                        </p>
-                        <p className="text-xs text-gray-600 truncate">
-                          {user?.role === "employer"
-                            ? "Nhà tuyển dụng"
-                            : "Người tìm việc"}
-                        </p>
-                      </div>
+                      <span className="text-sm font-semibold text-gray-700 hidden sm:block">
+                        {user?.name?.split(" ").pop() || "User"}
+                      </span>
                       <FaChevronDown
-                        className={`w-4 h-4 text-gray-600 transition-transform flex-shrink-0 ${
+                        className={`w-3 h-3 text-gray-600 transition-transform ${
                           userMenuOpen ? "transform rotate-180" : ""
                         }`}
                       />
                     </button>
 
-                    {/* Dropdown Menu - chỉ hiển thị khi userMenuOpen = true */}
+                    {/* Dropdown Menu */}
                     {userMenuOpen && (
-                      <div className="mt-2 bg-white rounded-xl border border-gray-200 py-2 shadow-lg">
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                        <div className="px-4 py-3 border-b border-gray-200">
+                          <div className="flex items-center gap-3 mb-2">
+                            {user?.avatar ? (
+                              <img
+                                src={user.avatar}
+                                alt="Avatar"
+                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {user?.name?.charAt(0).toUpperCase() || "U"}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">
+                                {user?.name}
+                              </p>
+                              <p className="text-xs text-gray-600 truncate">
+                                {user?.email}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-amber-700">
+                            {user?.role === "employer"
+                              ? "Nhà tuyển dụng"
+                              : "Người tìm việc"}
+                          </p>
+                        </div>
                         <Link
                           to="/profile"
-                          onClick={() => {
-                            setUserMenuOpen(false);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${
-                            isActive("/profile")
-                              ? "bg-purple-50 text-purple-600"
-                              : ""
-                          }`}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                         >
-                          <FaUser className="w-4 h-4" />
+                          <FaUser className="w-4 h-4 text-blue-600" />
                           <span>Thông tin tài khoản</span>
                         </Link>
                         {isEmployer ? (
                           <>
                             <Link
                               to="/employer/dashboard"
-                              onClick={() => {
-                                setUserMenuOpen(false);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${
-                                isActive("/employer/dashboard")
-                                  ? "bg-purple-50 text-purple-600"
-                                  : ""
-                              }`}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                             >
-                              <FaChartBar className="w-4 h-4" />
+                              <FaChartBar className="w-4 h-4 text-green-600" />
                               <span>Dashboard</span>
                             </Link>
                             <Link
                               to="/employer/applications"
-                              onClick={() => {
-                                setUserMenuOpen(false);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${
-                                isActive("/employer/applications")
-                                  ? "bg-purple-50 text-purple-600"
-                                  : ""
-                              }`}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                             >
-                              <FaFileAlt className="w-4 h-4" />
+                              <FaFileAlt className="w-4 h-4 text-indigo-600" />
                               <span>Đơn ứng tuyển</span>
                             </Link>
                           </>
@@ -733,32 +517,18 @@ function Header() {
                           <>
                             <Link
                               to="/onboarding"
-                              onClick={() => {
-                                setUserMenuOpen(false);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${
-                                isActive("/onboarding")
-                                  ? "bg-purple-50 text-purple-600"
-                                  : ""
-                              }`}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                             >
-                              <FaEdit className="w-4 h-4" />
+                              <FaEdit className="w-4 h-4 text-amber-600" />
                               <span>Cập nhật hồ sơ</span>
                             </Link>
                             <Link
                               to="/manage-cv"
-                              onClick={() => {
-                                setUserMenuOpen(false);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${
-                                isActive("/manage-cv")
-                                  ? "bg-purple-50 text-purple-600"
-                                  : ""
-                              }`}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                             >
-                              <FaFilePdf className="w-4 h-4" />
+                              <FaFilePdf className="w-4 h-4 text-red-600" />
                               <span>Quản lý CV</span>
                             </Link>
                           </>
@@ -768,7 +538,6 @@ function Header() {
                             onClick={() => {
                               logout();
                               setUserMenuOpen(false);
-                              setIsMobileMenuOpen(false);
                               window.location.href = "/";
                             }}
                             className="w-full flex items-center gap-2 text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
@@ -783,30 +552,334 @@ function Header() {
                 ) : (
                   <>
                     <Link
+                      ref={(el) => (linkRefs.current["/login"] = el)}
                       to="/login"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`${getMobileActiveClass("/login")} text-left`}
+                      className={getActiveClass("/login")}
                     >
                       Đăng nhập
                     </Link>
 
                     <Link
+                      ref={(el) => (linkRefs.current["/register"] = el)}
                       to="/register"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`${getMobileActiveClass(
-                        "/register"
-                      )} text-left`}
+                      className={getActiveClass("/register", true)}
                     >
                       Đăng ký
                     </Link>
                   </>
                 )}
               </div>
-            </div>
-          </nav>
-        )}
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-gray-700 hover:text-amber-700 cursor-pointer"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                {isMobileMenuOpen ? (
+                  <path d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <nav className="md:hidden pb-4 animate-fade-in">
+              <div className="flex flex-col space-y-2">
+                {/* Menu cho Employer */}
+                {isAuthenticated && isEmployer ? (
+                  <>
+                    <Link
+                      to="/employer"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/employer"
+                      )} text-left`}
+                    >
+                      Quản lý tin
+                    </Link>
+
+                    <Link
+                      to="/review-faq"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/review-faq"
+                      )} text-left`}
+                    >
+                      Hỏi đáp
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {/* Menu cho người tìm việc hoặc chưa đăng nhập */}
+                    <Link
+                      to="/"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaHome className="w-4 h-4 text-amber-600" />
+                      <span>Trang chủ</span>
+                    </Link>
+
+                    <Link
+                      to="/jobseeker"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/jobseeker"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaBriefcase className="w-4 h-4 text-blue-600" />
+                      <span>Tìm việc</span>
+                    </Link>
+
+                    <Link
+                      to="/charity"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/charity"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaHeart className="w-4 h-4 text-red-500" />
+                      <span>Hỗ trợ khác</span>
+                    </Link>
+
+                    <Link
+                      to="/scholarships"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/scholarships"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaGraduationCap className="w-4 h-4 text-purple-600" />
+                      <span>Học bổng</span>
+                    </Link>
+
+                    <Link
+                      to="/healthcare"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/healthcare"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaHospital className="w-4 h-4 text-green-600" />
+                      <span>Sức khỏe</span>
+                    </Link>
+
+                    <Link
+                      to="/career-guidance"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/career-guidance"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaBullseye className="w-4 h-4 text-orange-600" />
+                      <span>Hướng nghiệp</span>
+                    </Link>
+
+                    <Link
+                      to="/review-faq"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/review-faq"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaComments className="w-4 h-4 text-cyan-600" />
+                      <span>Hỏi đáp</span>
+                    </Link>
+                  </>
+                )}
+
+                <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
+                  {isAuthenticated ? (
+                    <div className="relative" ref={mobileUserMenuRef}>
+                      {/* User Button - tương tự desktop */}
+                      <button
+                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 transition-colors cursor-pointer text-left"
+                      >
+                        {user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="Avatar"
+                            className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {user?.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {user?.name}
+                          </p>
+                          <p className="text-xs text-gray-600 truncate">
+                            {user?.role === "employer"
+                              ? "Nhà tuyển dụng"
+                              : "Người tìm việc"}
+                          </p>
+                        </div>
+                        <FaChevronDown
+                          className={`w-4 h-4 text-gray-600 transition-transform flex-shrink-0 ${
+                            userMenuOpen ? "transform rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Dropdown Menu - chỉ hiển thị khi userMenuOpen = true */}
+                      {userMenuOpen && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-200 py-2 shadow-lg">
+                          <Link
+                            to="/profile"
+                            onClick={() => {
+                              setUserMenuOpen(false);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                              isActive("/profile")
+                                ? "bg-amber-50 text-amber-700"
+                                : ""
+                            }`}
+                          >
+                            <FaUser className="w-4 h-4" />
+                            <span>Thông tin tài khoản</span>
+                          </Link>
+                          {isEmployer ? (
+                            <>
+                              <Link
+                                to="/employer/dashboard"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                                  isActive("/employer/dashboard")
+                                    ? "bg-amber-50 text-amber-700"
+                                    : ""
+                                }`}
+                              >
+                                <FaChartBar className="w-4 h-4" />
+                                <span>Dashboard</span>
+                              </Link>
+                              <Link
+                                to="/employer/applications"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                                  isActive("/employer/applications")
+                                    ? "bg-amber-50 text-amber-700"
+                                    : ""
+                                }`}
+                              >
+                                <FaFileAlt className="w-4 h-4" />
+                                <span>Đơn ứng tuyển</span>
+                              </Link>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                to="/onboarding"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                                  isActive("/onboarding")
+                                    ? "bg-amber-50 text-amber-700"
+                                    : ""
+                                }`}
+                              >
+                                <FaEdit className="w-4 h-4" />
+                                <span>Cập nhật hồ sơ</span>
+                              </Link>
+                              <Link
+                                to="/manage-cv"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                                  isActive("/manage-cv")
+                                    ? "bg-amber-50 text-amber-700"
+                                    : ""
+                                }`}
+                              >
+                                <FaFilePdf className="w-4 h-4" />
+                                <span>Quản lý CV</span>
+                              </Link>
+                            </>
+                          )}
+                          <div className="border-t border-gray-200 mt-2 pt-2">
+                            <button
+                              onClick={() => {
+                                logout();
+                                setUserMenuOpen(false);
+                                setIsMobileMenuOpen(false);
+                                window.location.href = "/";
+                              }}
+                              className="w-full flex items-center gap-2 text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
+                            >
+                              <FaSignOutAlt className="w-4 h-4" />
+                              <span>Đăng xuất</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`${getMobileActiveClass(
+                          "/login"
+                        )} text-left`}
+                      >
+                        Đăng nhập
+                      </Link>
+
+                      <Link
+                        to="/register"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`${getMobileActiveClass(
+                          "/register"
+                        )} text-left`}
+                      >
+                        Đăng ký
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            </nav>
+          )}
+        </div>
+      </header>
+      <div className="slogan-marquee">
+        <div className="slogan-marquee__track">
+          {[...sloganTexts, ...sloganTexts].map((text, index) => (
+            <span className="slogan-marquee__item" key={`slogan-${index}`}>
+              {text}
+            </span>
+          ))}
+        </div>
       </div>
-    </header>
+    </>
   );
 }
 

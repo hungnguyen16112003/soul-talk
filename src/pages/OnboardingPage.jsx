@@ -47,17 +47,17 @@ function OnboardingPage() {
 
     showToast("Cập nhật hồ sơ thành công!", "success");
     setTimeout(() => {
-      navigate("/");
+      navigate("/jobseeker");
     }, 1000);
   };
 
   // Bỏ qua onboarding
   const handleSkip = () => {
-    navigate("/");
+    navigate("/jobseeker");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="page-wrapper min-h-screen py-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -82,7 +82,7 @@ function OnboardingPage() {
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                 step >= 1
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-600 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
@@ -90,13 +90,13 @@ function OnboardingPage() {
             </div>
             <div
               className={`w-20 h-1 ${
-                step >= 2 ? "bg-purple-600" : "bg-gray-300"
+                step >= 2 ? "bg-amber-600" : "bg-gray-300"
               }`}
             />
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                 step >= 2
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-600 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
@@ -104,13 +104,13 @@ function OnboardingPage() {
             </div>
             <div
               className={`w-20 h-1 ${
-                step >= 3 ? "bg-purple-600" : "bg-gray-300"
+                step >= 3 ? "bg-amber-600" : "bg-gray-300"
               }`}
             />
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                 step >= 3
-                  ? "bg-purple-600 text-white"
+                  ? "bg-amber-600 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
@@ -132,8 +132,8 @@ function OnboardingPage() {
                   onClick={() => handleSelectDisability(type)}
                   className={`p-6 rounded-xl border-2 transition-all cursor-pointer ${
                     selectedDisability?.id === type.id
-                      ? "border-purple-600 bg-purple-50 scale-105"
-                      : "border-gray-300 hover:border-purple-300"
+                      ? "border-amber-600 bg-amber-50 scale-105"
+                      : "border-gray-300 hover:border-amber-300"
                   }`}
                 >
                   <div className="text-4xl mb-2">{type.icon}</div>
@@ -144,7 +144,7 @@ function OnboardingPage() {
             <div className="flex justify-end">
               <button
                 onClick={handleNextToStep2}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all cursor-pointer"
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all cursor-pointer"
               >
                 Tiếp tục →
               </button>
@@ -165,8 +165,8 @@ function OnboardingPage() {
                   onClick={() => handleSelectSeverity(level)}
                   className={`p-6 rounded-xl border-2 transition-all text-left cursor-pointer ${
                     selectedSeverity?.id === level.id
-                      ? "border-purple-600 bg-purple-50 scale-105"
-                      : "border-gray-300 hover:border-purple-300"
+                      ? "border-amber-600 bg-amber-50 scale-105"
+                      : "border-gray-300 hover:border-amber-300"
                   }`}
                 >
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -185,7 +185,7 @@ function OnboardingPage() {
               </button>
               <button
                 onClick={handleComplete}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all cursor-pointer"
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all cursor-pointer"
               >
                 Hoàn thành
               </button>

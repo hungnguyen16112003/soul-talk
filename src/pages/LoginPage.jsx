@@ -18,7 +18,7 @@ function LoginPage() {
 
   // Dữ liệu đăng nhập mẫu (pre-filled)
   const [formData, setFormData] = useState({
-    email: "demo@soultalk.vn",
+    email: "demo@equalhire.vn",
     password: "demo123",
     role: "jobseeker", // employer hoặc jobseeker
   });
@@ -98,7 +98,7 @@ function LoginPage() {
       } else {
         // Đã có preferences, redirect luôn
         setTimeout(() => {
-          navigate("/");
+          navigate("/jobseeker");
         }, 1000);
       }
     } else {
@@ -113,12 +113,12 @@ function LoginPage() {
     setSelectedRegion(region);
     setShowRegionModal(false);
     setTimeout(() => {
-      navigate("/");
+      navigate("/jobseeker");
     }, 300);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="page-wrapper min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
