@@ -9,7 +9,6 @@ import EmployerPage from "../pages/EmployerPage";
 import JobDetailPage from "../pages/JobDetailPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import OnboardingPage from "../pages/OnboardingPage";
 import CharityPage from "../pages/CharityPage";
 import CharityDetailPage from "../pages/CharityDetailPage";
 import ScholarshipPage from "../pages/ScholarshipPage";
@@ -22,22 +21,59 @@ import SuccessStoryDetailPage from "../pages/SuccessStoryDetailPage";
 import ReviewFAQPage from "../pages/ReviewFAQPage";
 import EmployerDashboardPage from "../pages/EmployerDashboardPage";
 import EmployerApplicationsPage from "../pages/EmployerApplicationsPage";
+import MyApplicationsPage from "../pages/MyApplicationsPage";
 import ProfilePage from "../pages/ProfilePage";
 import ManageCVPage from "../pages/ManageCVPage";
+import CreateCVPage from "../pages/CreateCVPage";
+import CreateJobPage from "../pages/CreateJobPage";
 import InitialPreferencesModal from "../components/InitialPreferencesModal";
 import useAuthStore from "../store/authStore";
 
 function AppRouter() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const setUserPreferences = useAuthStore((state) => state.setUserPreferences);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
+    // Kiểm tra xem đã có token hoặc đã đăng nhập chưa
+    const token = localStorage.getItem("token");
+    const persistedAuth = localStorage.getItem("soul-talk-auth");
+
+    // Nếu đã đăng nhập hoặc có token, không hiển thị modal
+    if (
+      isAuthenticated ||
+      token ||
+      (persistedAuth && JSON.parse(persistedAuth).isAuthenticated)
+    ) {
+      setShowPreferencesModal(false);
+      setHasCheckedAuth(true);
+      return;
+    }
+
+    // Kiểm tra xem đã từng hoàn thành preferences chưa
+    const preferencesCompleted = localStorage.getItem("preferences-completed");
+    if (preferencesCompleted === "true") {
+      setShowPreferencesModal(false);
+      setHasCheckedAuth(true);
+      return;
+    }
+
+    // Chỉ hiển thị modal cho guest (chưa đăng nhập và chưa hoàn thành preferences)
+    setHasCheckedAuth(true);
     let timeoutId;
     timeoutId = setTimeout(() => {
-      setShowPreferencesModal(!isAuthenticated);
-    }, 0);
+      setShowPreferencesModal(true);
+    }, 100);
     return () => clearTimeout(timeoutId);
+  }, [isAuthenticated, user]);
+
+  // Đóng modal ngay khi đăng nhập thành công
+  useEffect(() => {
+    if (isAuthenticated) {
+      setShowPreferencesModal(false);
+    }
   }, [isAuthenticated]);
 
   const handleGlobalPreferencesComplete = (prefs) => {
@@ -47,17 +83,22 @@ function AppRouter() {
     ) {
       // Lưu preferences vào global store cho cả guest và user đăng nhập
       setUserPreferences(prefs);
+      // Đánh dấu đã hoàn thành preferences
+      localStorage.setItem("preferences-completed", "true");
     }
     setShowPreferencesModal(false);
   };
 
   return (
     <BrowserRouter>
-      {!isAuthenticated && (
+      {!isAuthenticated && showPreferencesModal && hasCheckedAuth && (
         <InitialPreferencesModal
           isOpen={showPreferencesModal}
           onComplete={handleGlobalPreferencesComplete}
-          onClose={() => setShowPreferencesModal(false)}
+          onClose={() => {
+            setShowPreferencesModal(false);
+            localStorage.setItem("preferences-completed", "true");
+          }}
         />
       )}
       <Header />
@@ -68,6 +109,7 @@ function AppRouter() {
           <Route path="/jobseeker" element={<JobSeekerPage />} />
           <Route path="/job/:id" element={<JobDetailPage />} />
           <Route path="/employer" element={<EmployerPage />} />
+          <Route path="/employer/create-job" element={<CreateJobPage />} />
           <Route
             path="/employer/dashboard"
             element={<EmployerDashboardPage />}
@@ -76,11 +118,12 @@ function AppRouter() {
             path="/employer/applications"
             element={<EmployerApplicationsPage />}
           />
+          <Route path="/my-applications" element={<MyApplicationsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/manage-cv" element={<ManageCVPage />} />
+          <Route path="/create-cv" element={<CreateCVPage />} />
           <Route path="/charity" element={<CharityPage />} />
           <Route path="/charity/:id" element={<CharityDetailPage />} />
           <Route path="/scholarships" element={<ScholarshipPage />} />

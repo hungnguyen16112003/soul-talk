@@ -1,6 +1,7 @@
 // Trang Landing - Chọn vai trò
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { FaBriefcase, FaUser } from "react-icons/fa";
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -27,8 +28,8 @@ function LandingPage() {
               className="group bg-white rounded-3xl p-8 md:p-10 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-blue-100 hover:border-blue-500 animate-fade-in"
             >
               <div className="flex justify-center mb-4">
-                <div className="text-6xl md:text-7xl transform group-hover:scale-110 transition-transform duration-300">
-                  💼
+                <div className="transform group-hover:scale-110 transition-transform duration-300">
+                  <FaBriefcase className="w-16 h-16 md:w-20 md:h-20 text-blue-500" />
                 </div>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors duration-300 text-center">
@@ -45,8 +46,8 @@ function LandingPage() {
               className="group bg-white rounded-3xl p-8 md:p-10 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-purple-100 hover:border-purple-500 animate-fade-in"
             >
               <div className="flex justify-center mb-4">
-                <div className="text-6xl md:text-7xl transform group-hover:scale-110 transition-transform duration-300">
-                  👤
+                <div className="transform group-hover:scale-110 transition-transform duration-300">
+                  <FaUser className="w-16 h-16 md:w-20 md:h-20 text-purple-500" />
                 </div>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3 group-hover:text-purple-600 transition-colors duration-300 text-center">

@@ -1,24 +1,66 @@
 // Trang chi tiết hỗ trợ khác
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { charityPrograms } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import { Toast, useToast } from "../components/Toast";
 import { FaArrowLeft, FaMapMarkerAlt, FaEnvelope, FaBuilding, FaCheckCircle, FaFileAlt, FaMoneyBillWave, FaGlobe, FaPhone, FaFacebook } from "react-icons/fa";
 
 function CharityDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const program = charityPrograms.find((p) => p.id === parseInt(id));
+  const { toast, showToast, hideToast } = useToast();
+  const [program, setProgram] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!program) {
+  useEffect(() => {
+    const loadCharity = async () => {
+      try {
+        setIsLoading(true);
+        const response = await contentService.getCharity(id);
+        // Backend trả về: { success: true, data: { charity: {...} } }
+        const charityData = response.data.data?.charity || response.data.charity || response.data.data || response.data;
+        if (!charityData) {
+          throw new Error("Không tìm thấy chương trình");
+        }
+        setProgram({
+          ...charityData,
+          id: charityData._id || charityData.id,
+          organization: charityData.organization || charityData.title,
+        });
+      } catch (error) {
+        console.error("Error loading charity:", error);
+        showToast("Không thể tải thông tin chương trình. Vui lòng thử lại sau.", "error");
+        setTimeout(() => {
+          navigate("/charity");
+        }, 2000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadCharity();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading || !program) {
     return (
       <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy chương trình</h1>
-          <button
-            onClick={() => navigate("/charity")}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Quay lại
-          </button>
+          {isLoading ? (
+            <p className="text-gray-600">Đang tải...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy chương trình</h1>
+              <button
+                onClick={() => navigate("/charity")}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                Quay lại
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -222,6 +264,12 @@ function CharityDetailPage() {
           </div>
         </div>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

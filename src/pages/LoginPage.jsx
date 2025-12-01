@@ -1,5 +1,5 @@
 // Trang đăng nhập
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
@@ -8,17 +8,25 @@ import { FaEye, FaEyeSlash, FaUserTie, FaBriefcase } from "react-icons/fa";
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { toast, showToast, hideToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
-  // Dữ liệu đăng nhập mẫu (pre-filled)
   const [formData, setFormData] = useState({
-    email: "demo@equalhire.vn",
-    password: "demo123",
+    email: "",
+    password: "",
     role: "jobseeker", // employer hoặc jobseeker
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Xử lý thay đổi input
   const handleChange = (e) => {
@@ -37,7 +45,7 @@ function LoginPage() {
   };
 
   // Xử lý submit đăng nhập
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation đơn giản
@@ -54,31 +62,50 @@ function LoginPage() {
       return;
     }
 
-    // Thực hiện đăng nhập
-    const userData = {
-      id: `user-${Date.now()}`,
-      name:
-        formData.role === "employer"
-          ? "Nhà Tuyển Dụng Demo"
-          : "Người Tìm Việc Demo",
-      email: formData.email,
-      role: formData.role,
-    };
-
-    login(userData);
-    showToast("Đăng nhập thành công!", "success");
-
-    // Nếu là người tìm việc
-    if (formData.role === "jobseeker") {
-      // Sau khi đăng nhập người tìm việc, chuyển thẳng đến trang tìm việc
-      setTimeout(() => {
-        navigate("/jobseeker");
-      }, 1000);
-    } else {
-      // Redirect cho nhà tuyển dụng
-      setTimeout(() => {
-        navigate("/employer");
-      }, 1000);
+    setIsLoading(true);
+    
+    try {
+      // Thực hiện đăng nhập qua API
+      const result = await login(formData.email, formData.password, formData.role);
+      
+      if (result && result.success) {
+        showToast("Đăng nhập thành công!", "success");
+        
+        // Wait for Zustand persist to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Force check state
+        const currentState = useAuthStore.getState();
+        
+        // Verify authentication was set and redirect to home
+        if (currentState.isAuthenticated) {
+          navigate("/", { replace: true });
+        } else {
+          showToast("Có lỗi xảy ra. Vui lòng thử lại!", "error");
+        }
+      } else {
+        const errorMessage = result?.error || result?.message || "Đăng nhập thất bại!";
+        showToast(errorMessage, "error");
+      }
+    } catch (error) {
+      // Hiển thị error message rõ ràng
+      let errorMessage = "Có lỗi xảy ra khi đăng nhập!";
+      if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // Thêm thông tin về backend nếu không kết nối được
+      if (error?.status === 0 || error?.message?.includes('kết nối')) {
+        errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra backend có đang chạy tại http://localhost:5000 không.";
+      }
+      
+      showToast(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -217,9 +244,12 @@ function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
-              Đăng nhập
+              {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </div>
         </form>

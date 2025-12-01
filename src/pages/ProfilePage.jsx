@@ -3,25 +3,48 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { Toast, useToast } from "../components/Toast";
+import { userService } from "../services/userService";
 import { FaCamera, FaTimes } from "react-icons/fa";
 
 function ProfilePage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const login = useAuthStore((state) => state.login);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const loadUser = useAuthStore((state) => state.loadUser);
+  const logout = useAuthStore((state) => state.logout);
   const { toast, showToast, hideToast } = useToast();
   const fileInputRef = useRef(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     role: "",
+    // Job Seeker fields
+    disabilityType: "",
+    severityLevel: "",
+    region: "",
+    // Employer fields
+    companyName: "",
+    companyAddress: "",
+    companyWebsite: "",
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Password change states
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   // Route protection
   useEffect(() => {
@@ -38,9 +61,29 @@ function ProfilePage() {
         email: user.email || "",
         phone: user.phone || "",
         role: user.role || "",
+        // Job Seeker fields
+        disabilityType: user.disabilityType || "",
+        severityLevel: user.severityLevel || "",
+        region: user.region || "",
+        // Employer fields
+        companyName: user.companyName || "",
+        companyAddress: user.companyAddress || "",
+        companyWebsite: user.companyWebsite || "",
       });
       if (user.avatar) {
-        setAvatarPreview(user.avatar);
+        // Build avatar URL
+        let avatarUrl;
+        if (user.avatar.startsWith("http")) {
+          avatarUrl = user.avatar;
+        } else if (user.avatar.startsWith("/")) {
+          avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`;
+        } else {
+          // If avatar is just filename, prepend /uploads/
+          avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`;
+        }
+        setAvatarPreview(avatarUrl);
+      } else {
+        setAvatarPreview(null);
       }
     }
   }, [user]);
@@ -53,22 +96,89 @@ function ProfilePage() {
     }));
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.email) {
+  const handleSave = async () => {
+    if (!formData.name) {
       showToast("Vui lòng điền đầy đủ thông tin!", "warning");
       return;
     }
 
-    // Update user in store
-    const updatedUser = {
-      ...user,
-      ...formData,
-      avatar: avatarPreview || user?.avatar,
-    };
-    login(updatedUser);
+    setIsSaving(true);
+    try {
+      // Prepare profile data (email không được thay đổi)
+      const profileData = {
+        name: formData.name,
+        phone: formData.phone || "",
+      };
 
-    setIsEditing(false);
-    showToast("Cập nhật thông tin thành công!", "success");
+      // Add role-specific fields
+      if (user?.role === "jobseeker") {
+        if (formData.disabilityType) profileData.disabilityType = formData.disabilityType;
+        if (formData.severityLevel) profileData.severityLevel = formData.severityLevel;
+        if (formData.region) profileData.region = formData.region;
+      } else if (user?.role === "employer") {
+        if (formData.companyName) profileData.companyName = formData.companyName;
+        if (formData.companyAddress) profileData.companyAddress = formData.companyAddress;
+        if (formData.companyWebsite) profileData.companyWebsite = formData.companyWebsite;
+      }
+
+      // Call API to update profile
+      const response = await userService.updateProfile(profileData, avatarFile);
+      
+      // API interceptor returns response.data directly, so response is already the data
+      if (response.success) {
+        const updatedUserData = response.data?.user || response.data || response.user;
+        
+        // Update user in store (keep original avatar path from backend)
+        updateUser({
+          name: updatedUserData.name,
+          email: updatedUserData.email,
+          phone: updatedUserData.phone,
+          avatar: updatedUserData.avatar, // Keep original path like "/uploads/avatar-xxx.jpg"
+          disabilityType: updatedUserData.disabilityType,
+          severityLevel: updatedUserData.severityLevel,
+          region: updatedUserData.region,
+          companyName: updatedUserData.companyName,
+          companyAddress: updatedUserData.companyAddress,
+          companyWebsite: updatedUserData.companyWebsite,
+        });
+
+        // Reset avatar file
+        setAvatarFile(null);
+        
+        // Update avatar preview if new avatar URL
+        if (updatedUserData.avatar) {
+          let avatarUrl;
+          if (updatedUserData.avatar.startsWith("http")) {
+            avatarUrl = updatedUserData.avatar;
+          } else if (updatedUserData.avatar.startsWith("/")) {
+            avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${updatedUserData.avatar}`;
+          } else {
+            // If avatar is just filename, prepend /uploads/
+            avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${updatedUserData.avatar}`;
+          }
+          setAvatarPreview(avatarUrl);
+        } else {
+          setAvatarPreview(null);
+        }
+
+        setIsEditing(false);
+        showToast("Cập nhật thông tin thành công!", "success");
+      } else {
+        showToast(response.error || response.message || "Cập nhật thông tin thất bại!", "error");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      console.error("Error details:", {
+        message: error.message,
+        error: error.error,
+        response: error.response,
+        data: error.data,
+      });
+      const errorMsg = error.error || error.message || error.data?.error || "Có lỗi xảy ra khi cập nhật thông tin!";
+      showToast(errorMsg, "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -87,17 +197,13 @@ function ProfilePage() {
       return;
     }
 
-    // Read file as base64
+    // Store file for upload
+    setAvatarFile(file);
+
+    // Read file as base64 for preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result);
-      // Auto-save avatar
-      const updatedUser = {
-        ...user,
-        avatar: reader.result,
-      };
-      login(updatedUser);
-      showToast("Cập nhật ảnh đại diện thành công!", "success");
     };
     reader.onerror = () => {
       showToast("Lỗi khi đọc file!", "error");
@@ -106,13 +212,33 @@ function ProfilePage() {
   };
 
   const handleRemoveAvatar = () => {
-    setAvatarPreview(null);
-    const updatedUser = {
-      ...user,
-      avatar: null,
-    };
-    login(updatedUser);
-    showToast("Đã xóa ảnh đại diện!", "success");
+    // Show confirmation dialog
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteAvatar = async () => {
+    setShowDeleteConfirm(false);
+    try {
+      // Call API to remove avatar
+      const profileData = { avatar: null };
+      const response = await userService.updateProfile(profileData, null);
+      
+      if (response.success) {
+        const updatedUserData = response.data?.user || response.data || response.user;
+        // Clear avatar preview and file
+        setAvatarPreview(null);
+        setAvatarFile(null);
+        // Update user in store with null avatar
+        updateUser({ avatar: null });
+        showToast("Đã xóa ảnh đại diện!", "success");
+      } else {
+        showToast(response.error || "Không thể xóa ảnh đại diện!", "error");
+      }
+    } catch (error) {
+      console.error("Error removing avatar:", error);
+      const errorMsg = error.error || error.message || "Có lỗi xảy ra khi xóa ảnh đại diện!";
+      showToast(errorMsg, "error");
+    }
   };
 
   const handleAvatarClick = () => {
@@ -123,6 +249,57 @@ function ProfilePage() {
     e.stopPropagation();
     if (avatarPreview || user?.avatar) {
       setIsAvatarModalOpen(true);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showToast("Mật khẩu xác nhận không khớp!", "error");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      showToast("Mật khẩu mới phải có ít nhất 6 ký tự!", "warning");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await userService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword,
+      });
+
+      showToast("Mật khẩu đã được thay đổi thành công! Bạn sẽ được đăng xuất để đăng nhập lại với mật khẩu mới.", "success");
+
+      // Reset form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowPasswordChange(false);
+
+      // Force logout after password change for security
+      setTimeout(() => {
+        logout();
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      const errorMessage = error.response?.data?.error || "Có lỗi xảy ra khi đổi mật khẩu!";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -160,38 +337,71 @@ function ProfilePage() {
         <div className="bg-white rounded-xl p-6 sm:p-8 shadow-md mb-6">
           {/* Avatar Section */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 pb-8 border-b border-gray-200">
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
               {avatarPreview || user?.avatar ? (
-                <div className="relative">
+                <>
                   <img
-                    src={avatarPreview || user?.avatar}
+                    src={avatarPreview || (() => {
+                      if (!user?.avatar) return '';
+                      if (user.avatar.startsWith("http")) return user.avatar;
+                      if (user.avatar.startsWith("/")) {
+                        return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`;
+                      }
+                      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`;
+                    })()}
                     alt="Avatar"
                     onClick={handleAvatarView}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-md cursor-pointer hover:opacity-90 transition-opacity"
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveAvatar();
+                    onError={(e) => {
+                      console.error("Avatar load error - Original:", user?.avatar);
+                      console.error("Avatar load error - URL:", e.target.src);
+                      // Show placeholder instead of hiding
+                      e.target.src = '';
+                      e.target.style.display = 'none';
                     }}
-                    className="absolute -top-1 -right-1 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg cursor-pointer z-10"
-                    title="Xóa ảnh đại diện"
-                  >
-                    <FaTimes className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    onLoad={() => {}}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-amber-500 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                  />
+                  {isEditing && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveAvatar();
+                        }}
+                        className="absolute -top-1 -right-1 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg cursor-pointer z-10"
+                        title="Xóa ảnh đại diện"
+                      >
+                        <FaTimes className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAvatarClick();
+                        }}
+                        className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
+                        title="Cập nhật ảnh đại diện"
+                      >
+                        <FaCamera className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </>
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || "U"}
-                </div>
+                <>
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
+                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                  </div>
+                  {isEditing && (
+                    <button
+                      onClick={handleAvatarClick}
+                      className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
+                      title="Cập nhật ảnh đại diện"
+                    >
+                      <FaCamera className="w-4 h-4" />
+                    </button>
+                  )}
+                </>
               )}
-              <button
-                onClick={handleAvatarClick}
-                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors shadow-lg border-2 border-white cursor-pointer z-10"
-                title="Cập nhật ảnh đại diện"
-              >
-                <FaCamera className="w-4 h-4" />
-              </button>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -248,20 +458,9 @@ function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email *
                 </label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="Nhập email"
-                  />
-                ) : (
-                  <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                    {formData.email || "Chưa có"}
-                  </p>
-                )}
+                <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                  {formData.email || "Chưa có"}
+                </p>
               </div>
 
               <div>
@@ -298,14 +497,163 @@ function ProfilePage() {
               </div>
             </div>
 
+            {/* Job Seeker Specific Fields */}
+            {user?.role === "jobseeker" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Loại khuyết tật
+                  </label>
+                  {isEditing ? (
+                    <select
+                      name="disabilityType"
+                      value={formData.disabilityType}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="">Chọn loại khuyết tật</option>
+                      <option value="Vận động">Vận động</option>
+                      <option value="Khiếm thính">Khiếm thính</option>
+                      <option value="Khiếm thị">Khiếm thị</option>
+                      <option value="Trí tuệ">Trí tuệ</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.disabilityType || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mức độ
+                  </label>
+                  {isEditing ? (
+                    <select
+                      name="severityLevel"
+                      value={formData.severityLevel}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="">Chọn mức độ</option>
+                      <option value="Nhẹ">Nhẹ</option>
+                      <option value="Trung bình">Trung bình</option>
+                      <option value="Nặng">Nặng</option>
+                    </select>
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.severityLevel || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Khu vực
+                  </label>
+                  {isEditing ? (
+                    <select
+                      name="region"
+                      value={formData.region}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="">Chọn khu vực</option>
+                      <option value="Miền Bắc">Miền Bắc</option>
+                      <option value="Miền Trung">Miền Trung</option>
+                      <option value="Miền Nam">Miền Nam</option>
+                    </select>
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.region || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Employer Specific Fields */}
+            {user?.role === "employer" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tên công ty
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Nhập tên công ty"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.companyName || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Website công ty
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      name="companyWebsite"
+                      value={formData.companyWebsite}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="https://example.com"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.companyWebsite || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Địa chỉ công ty
+                  </label>
+                  {isEditing ? (
+                    <textarea
+                      name="companyAddress"
+                      value={formData.companyAddress}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Nhập địa chỉ công ty"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
+                      {formData.companyAddress || "Chưa có"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Edit Buttons */}
             {isEditing && (
               <div className="flex gap-4 pt-4 border-t border-gray-200">
                 <button
                   onClick={handleSave}
-                  className="px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer"
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Lưu thay đổi
+                  {isSaving ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Đang lưu...</span>
+                    </>
+                  ) : (
+                    "Lưu thay đổi"
+                  )}
                 </button>
                 <button
                   onClick={() => {
@@ -314,10 +662,19 @@ function ProfilePage() {
                       email: user?.email || "",
                       phone: user?.phone || "",
                       role: user?.role || "",
+                      disabilityType: user?.disabilityType || "",
+                      severityLevel: user?.severityLevel || "",
+                      region: user?.region || "",
+                      companyName: user?.companyName || "",
+                      companyAddress: user?.companyAddress || "",
+                      companyWebsite: user?.companyWebsite || "",
                     });
+                    setAvatarFile(null);
+                    setAvatarPreview(user?.avatar || null);
                     setIsEditing(false);
                   }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  disabled={isSaving}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Hủy
                 </button>
@@ -326,53 +683,144 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* Additional Info for Job Seeker */}
-        {user?.role === "jobseeker" && (
-          <div className="bg-white rounded-xl p-8 shadow-md">
+        {/* Password Change Section */}
+        <div className="bg-white rounded-xl p-6 sm:p-8 shadow-md mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Bảo mật tài khoản
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Thay đổi mật khẩu để bảo vệ tài khoản của bạn
+              </p>
+            </div>
+            <button
+              onClick={() => setShowPasswordChange(!showPasswordChange)}
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium"
+            >
+              {showPasswordChange ? 'Hủy' : 'Đổi mật khẩu'}
+            </button>
+          </div>
+
+          {showPasswordChange && (
+            <div className="border-t border-gray-200 pt-6">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mật khẩu hiện tại
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                    placeholder="Nhập mật khẩu hiện tại"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mật khẩu mới
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                      placeholder="Nhập mật khẩu mới"
+                      minLength="6"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Xác nhận mật khẩu mới
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                      placeholder="Nhập lại mật khẩu mới"
+                      minLength="6"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setPasswordData({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                    }}
+                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isChangingPassword}
+                    className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Đang cập nhật...</span>
+                      </>
+                    ) : (
+                      <span>Lưu thay đổi</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Confirmation Dialog for Delete Avatar */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold text-gray-900 mb-4">
-              Hồ sơ tìm việc
+              Xác nhận xóa ảnh đại diện
             </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loại khuyết tật
-                </label>
-                <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                  {(() => {
-                    const profile = localStorage.getItem("jobSeekerProfile");
-                    if (profile) {
-                      const parsed = JSON.parse(profile);
-                      return parsed.disabilityType || "Chưa cập nhật";
-                    }
-                    return "Chưa cập nhật";
-                  })()}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mức độ
-                </label>
-                <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                  {(() => {
-                    const profile = localStorage.getItem("jobSeekerProfile");
-                    if (profile) {
-                      const parsed = JSON.parse(profile);
-                      return parsed.severityLevel || "Chưa cập nhật";
-                    }
-                    return "Chưa cập nhật";
-                  })()}
-                </p>
-              </div>
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn xóa ảnh đại diện không? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-3 justify-end">
               <button
-                onClick={() => navigate("/onboarding")}
-                className="text-amber-600 hover:text-amber-700 font-medium text-sm cursor-pointer"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                Cập nhật hồ sơ tìm việc →
+                Hủy
+              </button>
+              <button
+                onClick={confirmDeleteAvatar}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                Xóa
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal hiển thị ảnh avatar lớn */}
       {isAvatarModalOpen && (avatarPreview || user?.avatar) && (
@@ -382,10 +830,21 @@ function ProfilePage() {
         >
           <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center">
             <img
-              src={avatarPreview || user?.avatar}
+              src={
+                avatarPreview ||
+                (user?.avatar?.startsWith("http") 
+                  ? user.avatar
+                  : user?.avatar?.startsWith("/")
+                  ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`
+                  : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`)
+              }
               alt="Avatar"
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              onError={(e) => {
+                console.error("Avatar modal load error:", user?.avatar);
+                e.target.src = '';
+              }}
             />
             <button
               onClick={() => setIsAvatarModalOpen(false)}

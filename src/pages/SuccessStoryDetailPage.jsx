@@ -1,26 +1,67 @@
 // Trang chi tiết câu chuyện thành công
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { successStories } from "../data/mockData";
-import { FaArrowLeft, FaUser, FaExternalLinkAlt } from "react-icons/fa";
+import { contentService } from "../services/contentService";
+import { Toast, useToast } from "../components/Toast";
+import { FaArrowLeft, FaUser, FaExternalLinkAlt, FaStar } from "react-icons/fa";
 
 function SuccessStoryDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const story = successStories.find((s) => s.id === parseInt(id));
+  const { toast, showToast, hideToast } = useToast();
+  const [story, setStory] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!story) {
+  useEffect(() => {
+    const loadSuccessStory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await contentService.getSuccessStory(id);
+        // Backend trả về: { success: true, data: { successStory: {...} } }
+        const storyData = response.data.data?.successStory || response.data.successStory || response.data.data || response.data;
+        if (!storyData) {
+          throw new Error("Không tìm thấy câu chuyện");
+        }
+        setStory({
+          ...storyData,
+          id: storyData._id || storyData.id,
+        });
+      } catch (error) {
+        console.error("Error loading success story:", error);
+        showToast("Không thể tải câu chuyện. Vui lòng thử lại sau.", "error");
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadSuccessStory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading || !story) {
     return (
       <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Không tìm thấy câu chuyện
-          </h1>
-          <button
-            onClick={() => navigate("/")}
-            className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors"
-          >
-            Quay lại
-          </button>
+          {isLoading ? (
+            <p className="text-gray-600">Đang tải...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                Không tìm thấy câu chuyện
+              </h1>
+              <button
+                onClick={() => navigate("/")}
+                className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors cursor-pointer"
+              >
+                Quay lại
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -73,8 +114,8 @@ function SuccessStoryDetailPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-64 sm:h-80 flex items-center justify-center text-6xl">
-                  {"🌟"}
+                <div className="w-full h-64 sm:h-80 flex items-center justify-center">
+                  <FaStar className="w-24 h-24 text-yellow-400" />
                 </div>
               )}
             </div>
@@ -143,6 +184,12 @@ function SuccessStoryDetailPage() {
           )}
         </div>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

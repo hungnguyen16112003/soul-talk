@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { Toast, useToast } from "../components/Toast";
+import { cvService } from "../services/cvService";
 import {
   FaUpload,
   FaTrash,
@@ -15,7 +16,6 @@ import {
   FaPlus,
   FaEllipsisV,
 } from "react-icons/fa";
-import CreateCVModal from "../components/CreateCVModal";
 
 function ManageCVPage() {
   const navigate = useNavigate();
@@ -25,9 +25,9 @@ function ManageCVPage() {
   const fileInputRef = useRef(null);
 
   const [cvs, setCvs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [cvToDelete, setCvToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isCreateCVModalOpen, setIsCreateCVModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRefs = useRef({});
 
@@ -43,20 +43,40 @@ function ManageCVPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Load CVs from localStorage
+  // Load CVs from API
   useEffect(() => {
-    const savedCVs = localStorage.getItem(`cvs_${user?.id}`);
-    if (savedCVs) {
-      const parsedCVs = JSON.parse(savedCVs);
-      // Sort by uploadDate or id (newest first)
-      const sortedCVs = parsedCVs.sort((a, b) => {
-        const dateA = new Date(a.uploadDate || a.id);
-        const dateB = new Date(b.uploadDate || b.id);
-        return dateB - dateA; // Newest first
-      });
-      setCvs(sortedCVs);
+    const loadCVs = async () => {
+      if (!isAuthenticated || !user || user?.role === "employer") return;
+
+      try {
+        setIsLoading(true);
+        const response = await cvService.getCVs();
+        const cvsData = response.data.data?.cvs || response.data.cvs || [];
+        // Map _id to id and ensure type/fileType compatibility
+        const mappedCVs = cvsData.map((cv) => ({
+          ...cv,
+          id: cv._id || cv.id,
+          uploadDate: cv.createdAt || cv.uploadDate,
+          type: cv.fileType || cv.type, // Use fileType from API, fallback to type
+          fileType: cv.fileType || cv.type, // Ensure both fields exist
+          size: cv.fileSize || cv.size || 0, // Map fileSize to size for compatibility
+          fileSize: cv.fileSize || cv.size || 0, // Ensure both fields exist
+        }));
+        setCvs(mappedCVs);
+      } catch (error) {
+        console.error("Error loading CVs:", error);
+        showToast("Không thể tải danh sách CV. Vui lòng thử lại sau.", "error");
+        setCvs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isAuthenticated && user && user?.role !== "employer") {
+      loadCVs();
     }
-  }, [user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -78,19 +98,7 @@ function ManageCVPage() {
     };
   }, [openMenuId]);
 
-  // Save CVs to localStorage
-  const saveCVsToStorage = (newCVs) => {
-    // Sort by uploadDate or id (newest first)
-    const sortedCVs = newCVs.sort((a, b) => {
-      const dateA = new Date(a.uploadDate || a.id);
-      const dateB = new Date(b.uploadDate || b.id);
-      return dateB - dateA; // Newest first
-    });
-    localStorage.setItem(`cvs_${user?.id}`, JSON.stringify(sortedCVs));
-    setCvs(sortedCVs);
-  };
-
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -102,43 +110,43 @@ function ManageCVPage() {
     ];
     if (!allowedTypes.includes(file.type)) {
       showToast("Chỉ chấp nhận file PDF hoặc Word!", "warning");
+      e.target.value = "";
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       showToast("Kích thước file không được vượt quá 10MB!", "warning");
+      e.target.value = "";
       return;
     }
 
-    // Read file as base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    try {
+      setIsLoading(true);
+      const response = await cvService.uploadCV(file, file.name);
+      const cvData = response.data.data?.cv || response.data.cv;
       const newCV = {
-        id: Date.now(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        data: reader.result,
-        uploadDate: new Date().toISOString(),
-        isDefault: cvs.length === 0, // First CV is default
+        ...cvData,
+        id: cvData._id || cvData.id,
+        uploadDate: cvData.createdAt || new Date().toISOString(),
+        type: cvData.fileType || cvData.type || file.type,
+        fileType: cvData.fileType || cvData.type || file.type,
+        size: cvData.fileSize || cvData.size || file.size || 0,
+        fileSize: cvData.fileSize || cvData.size || file.size || 0,
       };
-
-      const updatedCVs = [...cvs, newCV];
-      // Sort by uploadDate or id (newest first)
-      const sortedCVs = updatedCVs.sort((a, b) => {
-        const dateA = new Date(a.uploadDate || a.id);
-        const dateB = new Date(b.uploadDate || b.id);
-        return dateB - dateA; // Newest first
-      });
-      saveCVsToStorage(sortedCVs);
+      setCvs((prev) => [newCV, ...prev]);
       showToast("Tải lên CV thành công!", "success");
-    };
-    reader.onerror = () => {
-      showToast("Lỗi khi đọc file!", "error");
-    };
-    reader.readAsDataURL(file);
-    e.target.value = ""; // Reset input
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Không thể tải lên CV. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
+      e.target.value = ""; // Reset input
+    }
   };
 
   const handleDeleteClick = (cv) => {
@@ -146,17 +154,25 @@ function ManageCVPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (cvToDelete) {
-      const updatedCVs = cvs.filter((cv) => cv.id !== cvToDelete.id);
-      // If deleted CV was default, set first CV as default
-      if (cvToDelete.isDefault && updatedCVs.length > 0) {
-        updatedCVs[0].isDefault = true;
-      }
-      saveCVsToStorage(updatedCVs);
+  const handleConfirmDelete = async () => {
+    if (!cvToDelete) return;
+
+    try {
+      setIsLoading(true);
+      await cvService.deleteCV(cvToDelete.id);
+      setCvs((prev) => prev.filter((cv) => cv.id !== cvToDelete.id));
       setIsDeleteModalOpen(false);
       setCvToDelete(null);
       showToast("Đã xóa CV thành công!", "success");
+    } catch (error) {
+      console.error("Error deleting CV:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Không thể xóa CV. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -165,96 +181,183 @@ function ManageCVPage() {
     setCvToDelete(null);
   };
 
-  const handleSetDefault = (cvId) => {
-    const updatedCVs = cvs.map((cv) => ({
-      ...cv,
-      isDefault: cv.id === cvId,
-    }));
-    // Sort by uploadDate or id (newest first)
-    const sortedCVs = updatedCVs.sort((a, b) => {
-      const dateA = new Date(a.uploadDate || a.id);
-      const dateB = new Date(b.uploadDate || b.id);
-      return dateB - dateA; // Newest first
-    });
-    saveCVsToStorage(sortedCVs);
-    setOpenMenuId(null); // Close menu
-    showToast("Đã đặt CV mặc định!", "success");
-  };
-
-  const handleDownload = (cv) => {
-    const link = document.createElement("a");
-    link.href = cv.data;
-    link.download = cv.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast("Đang tải xuống CV...", "info");
-  };
-
-  const handlePreview = (cv) => {
-    // Nếu CV là HTML (được tạo từ form), mở HTML trực tiếp
-    if (cv.type === "text/html" && cv.html) {
-      const newWindow = window.open("", "_blank");
-      if (newWindow) {
-        newWindow.document.write(cv.html);
-        newWindow.document.close();
-      }
-      return;
-    }
-
-    // Chuyển đổi data URL sang Blob URL để mở trong tab mới
+  const handleSetDefault = async (cvId) => {
     try {
-      // Lấy base64 data từ data URL
-      const base64Data = cv.data.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      setIsLoading(true);
+      await cvService.setDefaultCV(cvId);
+      setCvs((prev) =>
+        prev.map((cv) => ({
+          ...cv,
+          isDefault: cv.id === cvId,
+        }))
+      );
+      setOpenMenuId(null); // Close menu
+      showToast("Đã đặt CV mặc định!", "success");
+    } catch (error) {
+      console.error("Error setting default CV:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Không thể đặt CV mặc định. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async (cv) => {
+    try {
+      showToast("Đang tải xuống CV...", "info");
+      await cvService.downloadCV(cv.id);
+      showToast("Tải xuống CV thành công!", "success");
+    } catch (error) {
+      console.error("Error downloading CV:", error);
+      const errorMessage =
+        error?.message || "Không thể tải xuống CV. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    }
+  };
+
+  const handlePreview = async (cv) => {
+    try {
+      showToast("Đang tải CV...", "info");
+
+      const cvFileType = cv.fileType || cv.type;
+
+      // If HTML CV, fetch full CV data to get HTML
+      if (cvFileType === "text/html") {
+        // Try to get HTML from current cv object first
+        if (cv.html) {
+          const newWindow = window.open("", "_blank");
+          if (newWindow) {
+            newWindow.document.write(cv.html);
+            newWindow.document.close();
+            showToast("Đã mở CV trong tab mới", "success");
+          } else {
+            showToast(
+              "Không thể mở tab mới. Vui lòng kiểm tra cài đặt trình duyệt.",
+              "warning"
+            );
+          }
+          return;
+        }
+
+        // If not in object, fetch from API
+        try {
+          const response = await cvService.getCV(cv.id);
+          const cvData = response.data.data?.cv || response.data.cv;
+          if (cvData && cvData.html) {
+            const newWindow = window.open("", "_blank");
+            if (newWindow) {
+              newWindow.document.write(cvData.html);
+              newWindow.document.close();
+              showToast("Đã mở CV trong tab mới", "success");
+            } else {
+              showToast(
+                "Không thể mở tab mới. Vui lòng kiểm tra cài đặt trình duyệt.",
+                "warning"
+              );
+            }
+            return;
+          }
+        } catch (apiError) {
+          console.error("Error fetching CV from API:", apiError);
+          showToast(
+            "Không thể tải CV từ server. Vui lòng thử lại sau.",
+            "error"
+          );
+          return;
+        }
       }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: cv.type });
+
+      // For file-based CVs (PDF, Word), download and open
+      const baseURL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        showToast("Vui lòng đăng nhập lại để xem CV", "error");
+        return;
+      }
+
+      const response = await fetch(`${baseURL}/cvs/${cv.id}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to download CV");
+      }
+
+      const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      
-      // Mở file trong tab mới
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Giải phóng blob URL sau một khoảng thời gian
+
+      // Determine file type and open accordingly
+      if (cvFileType === "application/pdf") {
+        // For PDF, open in new tab
+        window.open(blobUrl, "_blank");
+        showToast("Đã mở CV trong tab mới", "success");
+      } else {
+        // For Word documents, create download link
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = cv.name || cv.fileName || "CV";
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Đã tải CV xuống. Vui lòng mở file để xem.", "success");
+      }
+
+      // Clean up blob URL after a delay
       setTimeout(() => {
         URL.revokeObjectURL(blobUrl);
-      }, 100);
+      }, 1000);
     } catch (error) {
-      console.error("Lỗi khi mở file:", error);
-      showToast("Không thể mở file. Vui lòng thử tải xuống.", "error");
+      console.error("Error previewing CV:", error);
+      const errorMessage =
+        error?.message || "Không thể xem CV. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
     }
   };
 
   const getFileIcon = (fileType) => {
-    if (fileType === "application/pdf") {
+    // Handle null/undefined
+    if (!fileType) {
+      return <FaFileAlt className="w-6 h-6 text-gray-500" />;
+    }
+
+    // Convert to string if needed
+    const typeStr = String(fileType).toLowerCase();
+
+    if (typeStr === "application/pdf") {
       return <FaFilePdf className="w-6 h-6 text-red-500" />;
     } else if (
-      fileType.includes("word") ||
-      fileType.includes("msword") ||
-      fileType.includes("wordprocessingml")
+      typeStr.includes("word") ||
+      typeStr.includes("msword") ||
+      typeStr.includes("wordprocessingml")
     ) {
       return <FaFileWord className="w-6 h-6 text-blue-500" />;
-    } else if (fileType === "text/html") {
+    } else if (typeStr === "text/html") {
       return <FaFileAlt className="w-6 h-6 text-green-500" />;
     }
     return <FaFileAlt className="w-6 h-6 text-gray-500" />;
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    // Handle null, undefined, NaN, or invalid values
+    if (!bytes || isNaN(bytes) || bytes === 0) {
+      return "0 B";
+    }
+    const size = Number(bytes);
+    if (isNaN(size) || size < 0) {
+      return "0 B";
+    }
+    if (size < 1024) return size + " B";
+    if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
+    return (size / (1024 * 1024)).toFixed(2) + " MB";
   };
 
   const formatDate = (dateString) => {
@@ -264,29 +367,6 @@ function ManageCVPage() {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handleCreateCV = (cvData, fileName) => {
-    const newCV = {
-      id: Date.now(),
-      name: fileName,
-      size: cvData.size || 0,
-      type: cvData.type || "text/html",
-      data: cvData.data,
-      uploadDate: new Date().toISOString(),
-      isDefault: cvs.length === 0, // First CV is default
-      html: cvData.html, // Store HTML for preview
-    };
-
-    const updatedCVs = [...cvs, newCV];
-    // Sort by uploadDate or id (newest first)
-    const sortedCVs = updatedCVs.sort((a, b) => {
-      const dateA = new Date(a.uploadDate || a.id);
-      const dateB = new Date(b.uploadDate || b.id);
-      return dateB - dateA; // Newest first
-    });
-    saveCVsToStorage(sortedCVs);
-    showToast("Tạo CV thành công!", "success");
   };
 
   if (!isAuthenticated || user?.role === "employer") {
@@ -331,9 +411,7 @@ function ManageCVPage() {
               className="border-2 border-dashed border-amber-300 rounded-xl p-8 text-center hover:bg-amber-50 transition-colors cursor-pointer"
             >
               <FaUpload className="w-12 h-12 text-amber-600 mx-auto mb-4" />
-              <p className="text-gray-700 font-medium mb-2">
-                Tải lên CV
-              </p>
+              <p className="text-gray-700 font-medium mb-2">Tải lên CV</p>
               <p className="text-sm text-gray-500">
                 Hỗ trợ file PDF, Word (Tối đa 10MB)
               </p>
@@ -346,16 +424,12 @@ function ManageCVPage() {
               />
             </div>
             <div
-              onClick={() => setIsCreateCVModalOpen(true)}
+              onClick={() => navigate("/create-cv")}
               className="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center hover:bg-blue-50 transition-colors cursor-pointer"
             >
               <FaPlus className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <p className="text-gray-700 font-medium mb-2">
-                Tạo CV mới
-              </p>
-              <p className="text-sm text-gray-500">
-                Tạo CV trực tiếp trên web
-              </p>
+              <p className="text-gray-700 font-medium mb-2">Tạo CV mới</p>
+              <p className="text-sm text-gray-500">Tạo CV trực tiếp trên web</p>
             </div>
           </div>
         </div>
@@ -366,7 +440,11 @@ function ManageCVPage() {
             Danh sách CV ({cvs.length})
           </h2>
 
-          {cvs.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Đang tải danh sách CV...</p>
+            </div>
+          ) : cvs.length === 0 ? (
             <div className="text-center py-12">
               <FaFileAlt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Bạn chưa có CV nào</p>
@@ -383,7 +461,9 @@ function ManageCVPage() {
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4">
                     <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full sm:w-auto">
-                      <div className="mt-1 flex-shrink-0">{getFileIcon(cv.type)}</div>
+                      <div className="mt-1 flex-shrink-0">
+                        {getFileIcon(cv.fileType || cv.type)}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                           <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base">
@@ -396,9 +476,16 @@ function ManageCVPage() {
                           )}
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                          <span>{formatFileSize(cv.size)}</span>
+                          <span>
+                            {formatFileSize(cv.size || cv.fileSize || 0)}
+                          </span>
                           <span className="hidden sm:inline">•</span>
-                          <span>Tải lên: {formatDate(cv.uploadDate)}</span>
+                          <span>
+                            {(cv.fileType || cv.type) === "text/html"
+                              ? "Tạo từ web"
+                              : "Tải lên"}
+                            : {formatDate(cv.uploadDate)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -417,8 +504,8 @@ function ManageCVPage() {
                       >
                         <FaDownload className="w-4 h-4 sm:w-4 sm:h-4" />
                       </button>
-                      <div 
-                        className="relative" 
+                      <div
+                        className="relative"
                         ref={(el) => {
                           if (el) {
                             menuRefs.current[cv.id] = el;
@@ -428,7 +515,9 @@ function ManageCVPage() {
                         }}
                       >
                         <button
-                          onClick={() => setOpenMenuId(openMenuId === cv.id ? null : cv.id)}
+                          onClick={() =>
+                            setOpenMenuId(openMenuId === cv.id ? null : cv.id)
+                          }
                           className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                           title="Tùy chọn"
                         >
@@ -443,13 +532,21 @@ function ManageCVPage() {
                               }}
                               disabled={cv.isDefault}
                               className={`w-full px-4 py-3 text-left text-sm rounded-t-lg transition-colors cursor-pointer flex items-center gap-2 ${
-                                cv.isDefault 
-                                  ? "text-gray-400 bg-gray-50 cursor-not-allowed" 
+                                cv.isDefault
+                                  ? "text-gray-400 bg-gray-50 cursor-not-allowed"
                                   : "text-gray-700 hover:bg-gray-50"
                               }`}
                             >
-                              <FaStar className={`w-4 h-4 ${cv.isDefault ? "text-gray-400" : "text-yellow-500"}`} />
-                              {cv.isDefault ? "Đã đặt mặc định" : "Đặt làm mặc định"}
+                              <FaStar
+                                className={`w-4 h-4 ${
+                                  cv.isDefault
+                                    ? "text-gray-400"
+                                    : "text-yellow-500"
+                                }`}
+                              />
+                              {cv.isDefault
+                                ? "Đã đặt mặc định"
+                                : "Đặt làm mặc định"}
                             </button>
                             <div className="border-t border-gray-200"></div>
                             <button
@@ -474,13 +571,6 @@ function ManageCVPage() {
         </div>
       </div>
 
-      {/* Create CV Modal */}
-      <CreateCVModal
-        isOpen={isCreateCVModalOpen}
-        onClose={() => setIsCreateCVModalOpen(false)}
-        onSave={handleCreateCV}
-      />
-
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && cvToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -491,12 +581,17 @@ function ManageCVPage() {
                   <FaTrash className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Xác nhận xóa</h3>
-                  <p className="text-sm text-gray-600">Hành động này không thể hoàn tác</p>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Xác nhận xóa
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Hành động này không thể hoàn tác
+                  </p>
                 </div>
               </div>
               <p className="text-gray-700 mb-6">
-                Bạn có chắc chắn muốn xóa CV <strong>"{cvToDelete.name}"</strong> không?
+                Bạn có chắc chắn muốn xóa CV{" "}
+                <strong>"{cvToDelete.name}"</strong> không?
                 {cvToDelete.isDefault && cvs.length > 1 && (
                   <span className="block mt-2 text-sm text-gray-600">
                     CV khác sẽ được đặt làm mặc định.
@@ -526,4 +621,3 @@ function ManageCVPage() {
 }
 
 export default ManageCVPage;
-

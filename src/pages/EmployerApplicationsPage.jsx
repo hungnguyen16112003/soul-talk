@@ -1,8 +1,20 @@
 // Trang quản lý đơn ứng tuyển cho nhà tuyển dụng
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import { Toast, useToast } from "../components/Toast";
+import { applicationService } from "../services/applicationService";
+import { cvService } from "../services/cvService";
+import socketService from "../services/socketService";
+import {
+  FaFilePdf,
+  FaFileWord,
+  FaFileAlt,
+  FaEye,
+  FaDownload,
+  FaEnvelope,
+  FaPhone,
+} from "react-icons/fa";
 
 function EmployerApplicationsPage() {
   const navigate = useNavigate();
@@ -11,41 +23,15 @@ function EmployerApplicationsPage() {
 
   const { toast, showToast, hideToast } = useToast();
 
-  // Mock applications data
-  const [applications] = useState([
-    {
-      id: 1,
-      jobTitle: "Lập trình viên Frontend",
-      applicantName: "Nguyễn Văn A",
-      applicantEmail: "nguyenvana@example.com",
-      applicantPhone: "0123456789",
-      appliedDate: "2024-01-15",
-      status: "pending",
-      resume: "CV_NguyenVanA.pdf",
-    },
-    {
-      id: 2,
-      jobTitle: "Nhân viên tư vấn khách hàng",
-      applicantName: "Trần Thị B",
-      applicantEmail: "tranthib@example.com",
-      applicantPhone: "0987654321",
-      appliedDate: "2024-01-14",
-      status: "accepted",
-      resume: "CV_TranThiB.pdf",
-    },
-    {
-      id: 3,
-      jobTitle: "Nhập liệu viên",
-      applicantName: "Lê Văn C",
-      applicantEmail: "levanc@example.com",
-      applicantPhone: "0912345678",
-      appliedDate: "2024-01-13",
-      status: "rejected",
-      resume: "CV_LeVanC.pdf",
-    },
-  ]);
+  // Check if user is admin
+  const isAdmin = useMemo(() => {
+    const userRoles = user?.roles || [];
+    return userRoles.includes("admin");
+  }, [user]);
 
-  const [filteredApplications, setFilteredApplications] = useState(applications);
+  const [applications, setApplications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filteredApplications, setFilteredApplications] = useState([]);
   const [filters, setFilters] = useState({
     jobTitle: "",
     status: "",
@@ -53,10 +39,118 @@ function EmployerApplicationsPage() {
 
   // Route protection
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "employer") {
+    if (!isAuthenticated) {
       navigate("/login");
+      return;
+    }
+    if (user?.role !== "employer" && user?.role !== "admin") {
+      navigate("/");
+      return;
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Load applications from API
+  useEffect(() => {
+    const loadApplications = async () => {
+      if (
+        !isAuthenticated ||
+        (user?.role !== "employer" && user?.role !== "admin")
+      )
+        return;
+
+      try {
+        setIsLoading(true);
+        const response = await applicationService.getAllEmployerApplications();
+        const appsData =
+          response.data.data?.applications || response.data.applications || [];
+        // Map _id to id for compatibility
+        const mappedApps = appsData.map((app) => ({
+          ...app,
+          id: app._id || app.id,
+          jobId: app.job?._id || app.job?.id || app.job,
+          jobTitle: app.job?.title || "",
+          jobCompany: app.job?.company || "",
+          jobEmployer: app.job?.employer || null, // For admin to see employer info
+          applicantName: app.jobSeeker?.name || "",
+          applicantEmail: app.jobSeeker?.email || "",
+          applicantPhone: app.jobSeeker?.phone || "",
+          applicantAvatar: app.jobSeeker?.avatar || "",
+          appliedDate: app.createdAt || app.appliedDate,
+          cvId: app.cv?._id || app.cv?.id || app.cv,
+          cvName: app.cv?.name || "",
+          cvFileName: app.cv?.fileName || "",
+          cvFileType: app.cv?.fileType || app.cv?.type || "",
+        }));
+        setApplications(mappedApps);
+      } catch (error) {
+        console.error("Error loading applications:", error);
+        showToast(
+          "Không thể tải danh sách đơn ứng tuyển. Vui lòng thử lại sau.",
+          "error"
+        );
+        setApplications([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (
+      isAuthenticated &&
+      (user?.role === "employer" || user?.role === "admin")
+    ) {
+      loadApplications();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user]);
+
+  // Setup Socket.io for realtime notifications
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      (user?.role !== "employer" && user?.role !== "admin")
+    )
+      return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Connect socket
+    const socket = socketService.connect(token);
+
+    // Listen for new applications
+    socket.on("new-application", (data) => {
+      showToast(
+        `Có đơn ứng tuyển mới từ ${data.application.jobSeeker.name} cho công việc "${data.application.job.title}"`,
+        "info"
+      );
+
+      // Add new application to list
+      const newApp = {
+        ...data.application,
+        id: data.application._id,
+        jobId: data.application.job._id,
+        jobTitle: data.application.job.title,
+        jobCompany: data.application.job.company || "",
+        jobEmployer: data.application.job.employer || null,
+        applicantName: data.application.jobSeeker.name,
+        applicantEmail: data.application.jobSeeker.email,
+        applicantPhone: data.application.jobSeeker.phone || "",
+        applicantAvatar: data.application.jobSeeker.avatar || "",
+        appliedDate: data.application.createdAt,
+        cvId: data.application.cv._id,
+        cvName: data.application.cv.name,
+        cvFileName: data.application.cv.fileName || "",
+        cvFileType: data.application.cv.fileType || "",
+      };
+
+      setApplications((prev) => [newApp, ...prev]);
+    });
+
+    return () => {
+      socket.off("new-application");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user]);
 
   // Filter applications
   useEffect(() => {
@@ -75,17 +169,146 @@ function EmployerApplicationsPage() {
     setFilteredApplications(result);
   }, [filters, applications]);
 
-  const handleStatusChange = (appId, newStatus) => {
-    showToast(
-      `Đã cập nhật trạng thái ${
-        newStatus === "accepted"
-          ? "chấp nhận"
-          : newStatus === "rejected"
-          ? "từ chối"
-          : "đang xem xét"
-      }!`,
-      "success"
-    );
+  const handleStatusChange = async (appId, newStatus) => {
+    try {
+      await applicationService.updateApplicationStatus(appId, newStatus, "");
+      showToast(
+        `Đã cập nhật trạng thái ${
+          newStatus === "accepted"
+            ? "chấp nhận"
+            : newStatus === "rejected"
+            ? "từ chối"
+            : "đang xem xét"
+        }!`,
+        "success"
+      );
+
+      // Update local state
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === appId ? { ...app, status: newStatus } : app
+        )
+      );
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Không thể cập nhật trạng thái. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    }
+  };
+
+  const handleViewCV = async (cvId) => {
+    try {
+      showToast("Đang tải CV...", "info");
+
+      // First, get CV details to check file type
+      const cvResponse = await cvService.getCV(cvId);
+      const cvData = cvResponse.data.data?.cv || cvResponse.data.cv;
+
+      if (!cvData) {
+        throw new Error("Không tìm thấy CV");
+      }
+
+      const cvFileType = cvData.fileType || cvData.type;
+
+      // If HTML CV, open in new tab
+      if (cvFileType === "text/html" && cvData.html) {
+        const newWindow = window.open("", "_blank");
+        if (newWindow) {
+          newWindow.document.write(cvData.html);
+          newWindow.document.close();
+          showToast("Đã mở CV trong tab mới", "success");
+        } else {
+          showToast(
+            "Không thể mở tab mới. Vui lòng kiểm tra cài đặt trình duyệt.",
+            "warning"
+          );
+        }
+        return;
+      }
+
+      // For file-based CVs (PDF, Word), download and open
+      const baseURL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        showToast("Vui lòng đăng nhập lại để xem CV", "error");
+        return;
+      }
+
+      const response = await fetch(`${baseURL}/cvs/${cvId}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Không thể tải CV");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Determine file type and open accordingly
+      if (cvFileType === "application/pdf") {
+        // For PDF, open in new tab
+        window.open(blobUrl, "_blank");
+        showToast("Đã mở CV trong tab mới", "success");
+      } else {
+        // For Word documents, create download link
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = cvData.name || cvData.fileName || "CV";
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Đã tải CV xuống. Vui lòng mở file để xem.", "success");
+      }
+
+      // Clean up blob URL after a delay
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
+    } catch (error) {
+      console.error("Error viewing CV:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Không thể xem CV. Vui lòng thử lại sau.";
+      showToast(errorMessage, "error");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getFileIcon = (fileType) => {
+    if (!fileType) return <FaFileAlt className="w-4 h-4 text-gray-500" />;
+    const typeStr = String(fileType).toLowerCase();
+    if (typeStr === "application/pdf") {
+      return <FaFilePdf className="w-4 h-4 text-red-500" />;
+    } else if (
+      typeStr.includes("word") ||
+      typeStr.includes("msword") ||
+      typeStr.includes("wordprocessingml")
+    ) {
+      return <FaFileWord className="w-4 h-4 text-blue-500" />;
+    } else if (typeStr === "text/html") {
+      return <FaFileAlt className="w-4 h-4 text-green-500" />;
+    }
+    return <FaFileAlt className="w-4 h-4 text-gray-500" />;
   };
 
   const getStatusLabel = (status) => {
@@ -114,7 +337,10 @@ function EmployerApplicationsPage() {
     }
   };
 
-  if (!isAuthenticated || user?.role !== "employer") {
+  if (
+    !isAuthenticated ||
+    (user?.role !== "employer" && user?.role !== "admin")
+  ) {
     return null;
   }
 
@@ -130,12 +356,23 @@ function EmployerApplicationsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Đơn ứng tuyển
-          </h1>
-          <p className="text-gray-600">
-            Quản lý và xử lý đơn ứng tuyển của ứng viên
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Đơn ứng tuyển
+              </h1>
+              <p className="text-gray-600">
+                {isAdmin
+                  ? "Quản lý toàn bộ đơn ứng tuyển trên hệ thống"
+                  : "Quản lý và xử lý đơn ứng tuyển của ứng viên"}
+              </p>
+            </div>
+            {isAdmin && (
+              <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                🔑 Chế độ Admin
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -179,12 +416,25 @@ function EmployerApplicationsPage() {
         {/* Applications List */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">
-              Danh sách đơn ứng tuyển ({filteredApplications.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                Danh sách đơn ứng tuyển ({filteredApplications.length})
+              </h2>
+              {isAdmin && (
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                  Đang xem tất cả đơn ứng tuyển
+                </span>
+              )}
+            </div>
           </div>
 
-          {filteredApplications.length > 0 ? (
+          {isLoading ? (
+            <div className="p-12 text-center">
+              <p className="text-gray-600">
+                Đang tải danh sách đơn ứng tuyển...
+              </p>
+            </div>
+          ) : filteredApplications.length > 0 ? (
             <div className="divide-y divide-gray-200">
               {filteredApplications.map((app) => (
                 <div
@@ -198,12 +448,39 @@ function EmployerApplicationsPage() {
                       </h3>
                       <p className="text-purple-600 font-medium mb-2">
                         {app.jobTitle}
+                        {app.jobCompany && ` - ${app.jobCompany}`}
                       </p>
+                      {isAdmin && app.jobEmployer && (
+                        <div className="mb-2">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            👤 Nhà tuyển dụng:{" "}
+                            {typeof app.jobEmployer === "object"
+                              ? app.jobEmployer.name ||
+                                app.jobEmployer.email ||
+                                "N/A"
+                              : "N/A"}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span>📧 {app.applicantEmail}</span>
-                        <span>📞 {app.applicantPhone}</span>
-                        <span>📅 {app.appliedDate}</span>
+                        <span className="flex items-center gap-1">
+                          <FaEnvelope className="w-3 h-3 text-blue-500" />
+                          {app.applicantEmail}
+                        </span>
+                        {app.applicantPhone && (
+                          <span className="flex items-center gap-1">
+                            <FaPhone className="w-3 h-3 text-green-500" />
+                            {app.applicantPhone}
+                          </span>
+                        )}
+                        <span>📅 {formatDate(app.appliedDate)}</span>
                       </div>
+                      {app.cvName && (
+                        <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                          {getFileIcon(app.cvFileType)}
+                          <span>CV: {app.cvName}</span>
+                        </div>
+                      )}
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
@@ -215,26 +492,44 @@ function EmployerApplicationsPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => window.open(app.resume, "_blank")}
-                      className="text-purple-600 hover:text-purple-700 font-medium text-sm cursor-pointer"
-                    >
-                      Xem CV →
-                    </button>
+                    {app.cvId && (
+                      <button
+                        onClick={() => handleViewCV(app.cvId)}
+                        className="text-amber-600 hover:text-amber-700 font-medium text-sm cursor-pointer flex items-center gap-2"
+                      >
+                        <FaEye className="w-4 h-4" />
+                        Xem CV
+                      </button>
+                    )}
+                    {app.cvId && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await cvService.downloadCV(app.cvId);
+                            showToast("Đã tải CV xuống", "success");
+                          } catch (error) {
+                            showToast(
+                              "Không thể tải CV. Vui lòng thử lại sau.",
+                              "error"
+                            );
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-700 font-medium text-sm cursor-pointer flex items-center gap-2"
+                      >
+                        <FaDownload className="w-4 h-4" />
+                        Tải CV
+                      </button>
+                    )}
                     {app.status === "pending" && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            handleStatusChange(app.id, "accepted")
-                          }
+                          onClick={() => handleStatusChange(app.id, "accepted")}
                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm cursor-pointer"
                         >
                           Chấp nhận
                         </button>
                         <button
-                          onClick={() =>
-                            handleStatusChange(app.id, "rejected")
-                          }
+                          onClick={() => handleStatusChange(app.id, "rejected")}
                           className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm cursor-pointer"
                         >
                           Từ chối
@@ -257,4 +552,3 @@ function EmployerApplicationsPage() {
 }
 
 export default EmployerApplicationsPage;
-

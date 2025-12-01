@@ -1,34 +1,65 @@
 // Modal chọn CV để ứng tuyển
 import { useState, useEffect } from "react";
-import { FaTimes, FaFilePdf, FaFileWord, FaFileAlt, FaCheck, FaEnvelope, FaPhone, FaInfoCircle } from "react-icons/fa";
+import {
+  FaTimes,
+  FaFilePdf,
+  FaFileWord,
+  FaFileAlt,
+  FaCheck,
+  FaEnvelope,
+  FaPhone,
+  FaInfoCircle,
+} from "react-icons/fa";
 import useAuthStore from "../store/authStore";
+import { cvService } from "../services/cvService";
+import { Toast, useToast } from "./Toast";
 
 function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
   const user = useAuthStore((state) => state.user);
+  const { toast, showToast, hideToast } = useToast();
   const [cvs, setCvs] = useState([]);
   const [selectedCVId, setSelectedCVId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load CVs from localStorage
+  // Load CVs from API
   useEffect(() => {
-    if (isOpen && user?.id) {
-      const savedCVs = localStorage.getItem(`cvs_${user.id}`);
-      if (savedCVs) {
-        const parsedCVs = JSON.parse(savedCVs);
-        // Sort by uploadDate or id (newest first)
-        const sortedCVs = parsedCVs.sort((a, b) => {
-          const dateA = new Date(a.uploadDate || a.id);
-          const dateB = new Date(b.uploadDate || b.id);
-          return dateB - dateA; // Newest first
-        });
-        setCvs(sortedCVs);
+    const loadCVs = async () => {
+      if (!isOpen || !user?.id) return;
+
+      try {
+        setIsLoading(true);
+        const response = await cvService.getCVs();
+        const cvsData = response.data.data?.cvs || response.data.cvs || [];
+        // Map _id to id for compatibility
+        const mappedCVs = cvsData.map((cv) => ({
+          ...cv,
+          id: cv._id || cv.id,
+          uploadDate: cv.createdAt || cv.uploadDate,
+          type: cv.fileType || cv.type,
+          fileType: cv.fileType || cv.type,
+          size: cv.fileSize || cv.size || 0,
+          fileSize: cv.fileSize || cv.size || 0,
+        }));
+        setCvs(mappedCVs);
+
         // Set default CV as selected if exists
-        const defaultCV = sortedCVs.find((cv) => cv.isDefault);
+        const defaultCV = mappedCVs.find((cv) => cv.isDefault);
         if (defaultCV) {
           setSelectedCVId(defaultCV.id);
-        } else if (sortedCVs.length > 0) {
-          setSelectedCVId(sortedCVs[0].id);
+        } else if (mappedCVs.length > 0) {
+          setSelectedCVId(mappedCVs[0].id);
         }
+      } catch (error) {
+        console.error("Error loading CVs:", error);
+        showToast("Không thể tải danh sách CV. Vui lòng thử lại sau.", "error");
+        setCvs([]);
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    if (isOpen) {
+      loadCVs();
     }
   }, [isOpen, user?.id]);
 
@@ -48,9 +79,16 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    if (!bytes || isNaN(bytes) || bytes === 0) {
+      return "0 B";
+    }
+    const size = Number(bytes);
+    if (isNaN(size) || size < 0) {
+      return "0 B";
+    }
+    if (size < 1024) return size + " B";
+    if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
+    return (size / (1024 * 1024)).toFixed(2) + " MB";
   };
 
   const formatDate = (dateString) => {
@@ -85,12 +123,14 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-xl max-w-2xl w-full shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl max-w-2xl w-full shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-gray-900">Chọn CV để ứng tuyển</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Chọn CV để ứng tuyển
+          </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
@@ -100,8 +140,12 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          {cvs.length === 0 ? (
+        <div className="p-6 flex-1 overflow-y-auto">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Đang tải danh sách CV...</p>
+            </div>
+          ) : cvs.length === 0 ? (
             <div className="text-center py-12">
               <FaFileAlt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Bạn chưa có CV nào</p>
@@ -110,7 +154,7 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
               </p>
               <button
                 onClick={handleClose}
-                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium cursor-pointer"
+                className="px-6 py-2 text-white rounded-lg hover:shadow-lg transition-all font-medium cursor-pointer animate-gradient-slide"
               >
                 Đóng
               </button>
@@ -127,13 +171,13 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
                     onClick={() => setSelectedCVId(cv.id)}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedCVId === cv.id
-                        ? "border-purple-600 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
+                        ? "border-amber-500 bg-amber-50"
+                        : "border-gray-200 hover:border-amber-300 hover:bg-gray-50"
                     }`}
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0 mt-1">
-                        {getFileIcon(cv.type)}
+                        {getFileIcon(cv.fileType || cv.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
@@ -146,13 +190,20 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
                             </span>
                           )}
                           {selectedCVId === cv.id && (
-                            <FaCheck className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                            <FaCheck className="w-5 h-5 text-amber-600 flex-shrink-0" />
                           )}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span>{formatFileSize(cv.size)}</span>
+                          <span>
+                            {formatFileSize(cv.size || cv.fileSize || 0)}
+                          </span>
                           <span>•</span>
-                          <span>Tải lên: {formatDate(cv.uploadDate)}</span>
+                          <span>
+                            {(cv.fileType || cv.type) === "text/html"
+                              ? "Tạo từ web"
+                              : "Tải lên"}
+                            : {formatDate(cv.uploadDate)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -175,12 +226,14 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
                     💡 Mẹo nhận phản hồi nhanh hơn:
                   </p>
                   <p className="text-xs text-blue-700 leading-relaxed">
-                    Bạn có thể gửi CV qua email hoặc liên hệ trực tiếp qua số điện thoại của nhà tuyển dụng để nhận phản hồi nhanh hơn. Thông tin liên hệ có trong phần chi tiết công việc.
+                    Bạn có thể gửi CV qua email hoặc liên hệ trực tiếp qua số
+                    điện thoại của nhà tuyển dụng để nhận phản hồi nhanh hơn.
+                    Thông tin liên hệ có trong phần chi tiết công việc.
                   </p>
                 </div>
               </div>
             </div>
-            
+
             {/* Buttons */}
             <div className="px-6 py-4 flex gap-3">
               <button
@@ -194,7 +247,7 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
                 disabled={!selectedCVId}
                 className={`flex-1 py-3 rounded-lg transition-all font-medium cursor-pointer ${
                   selectedCVId
-                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg"
+                    ? "text-white hover:shadow-lg animate-gradient-slide"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -204,9 +257,14 @@ function SelectCVModal({ isOpen, onClose, onSelect, jobId }) {
           </div>
         )}
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }
 
 export default SelectCVModal;
-

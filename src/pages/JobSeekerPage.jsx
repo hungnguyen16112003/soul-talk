@@ -1,9 +1,12 @@
 // Trang tìm việc cho người tìm việc - hiển thị danh sách việc với filters
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import JobCard from "../components/JobCard";
-import { mockJobs, disabilityTypes, severityLevels } from "../data/mockData";
+import { disabilityTypes, severityLevels } from "../data/mockData";
+import { jobService } from "../services/jobService";
 import useAuthStore from "../store/authStore";
+import useDataCacheStore from "../store/dataCacheStore";
+import { Toast, useToast } from "../components/Toast";
 
 // Hàm bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
 const removeVietnameseAccents = (str) => {
@@ -29,15 +32,19 @@ function JobSeekerPage() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [jobs] = useState(mockJobs);
-  const [filteredJobs, setFilteredJobs] = useState(mockJobs);
-  
+  const { toast, showToast, hideToast } = useToast();
+  const getCache = useDataCacheStore((state) => state.getCache);
+  const setCache = useDataCacheStore((state) => state.setCache);
+
+  const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Hàm phân loại ngành nghề
   const getJobCategory = (job) => {
     const title = job.title.toLowerCase();
     const description = job.description.toLowerCase();
     const combined = title + " " + description;
-    
+
     if (
       combined.includes("lập trình") ||
       combined.includes("công nghệ") ||
@@ -79,47 +86,142 @@ function JobSeekerPage() {
     { value: "Khác", label: "Khác" },
   ];
 
-  // Khởi tạo filters từ preferences hoặc profile
-  const [filters, setFilters] = useState(() => ({
-    search: "",
-    category: "",
-    disabilityType: "",
-    severityLevel: "",
-    location: "",
-    status: "active",
-  }));
+  // Khởi tạo filters từ user data hoặc preferences
+  const [filters, setFilters] = useState(() => {
+    // Ưu tiên lấy từ user data, nếu không có thì lấy từ preferences
+    const userDisabilityType = user?.disabilityType || "";
+    const userSeverityLevel = user?.severityLevel || "";
+    const userRegion = user?.region || "";
 
-  // Cập nhật filters khi preferences thay đổi
+    // Map disabilityType: nếu là "Khác" thì để trống
+    const mappedDisabilityType = userDisabilityType === "Khác" ? "" : userDisabilityType;
+
+    return {
+      search: "",
+      category: "",
+      disabilityType: mappedDisabilityType,
+      severityLevel: userSeverityLevel,
+      location: userRegion,
+      status: "active",
+    };
+  });
+
+  // Cập nhật filters khi user data thay đổi
   useEffect(() => {
-    const prefs = preferences || userPreferences;
-    // Chỉ áp dụng khi thực sự có dữ liệu lọc từ modal
-    if (
-      prefs &&
-      (prefs.disabilityType || prefs.severityLevel || prefs.region)
-    ) {
-      const mappedDisability =
-        prefs.disabilityType === "Khác" ? "" : prefs.disabilityType;
+    // Ưu tiên lấy từ user data
+    if (user && (user.disabilityType || user.severityLevel || user.region)) {
+      const mappedDisabilityType = user.disabilityType === "Khác" ? "" : (user.disabilityType || "");
       setFilters((prev) => ({
         ...prev,
-        disabilityType: mappedDisability || prev.disabilityType,
-        severityLevel: prefs.severityLevel || prev.severityLevel,
-        location: prefs.region || prev.location,
+        disabilityType: mappedDisabilityType,
+        severityLevel: user.severityLevel || prev.severityLevel,
+        location: user.region || prev.location,
       }));
+    } else {
+      // Nếu user chưa có data, thử lấy từ preferences (cho guest users)
+      const prefs = preferences || userPreferences;
+      if (
+        prefs &&
+        (prefs.disabilityType || prefs.severityLevel || prefs.region)
+      ) {
+        const mappedDisability =
+          prefs.disabilityType === "Khác" ? "" : prefs.disabilityType;
+        setFilters((prev) => ({
+          ...prev,
+          disabilityType: mappedDisability || prev.disabilityType,
+          severityLevel: prefs.severityLevel || prev.severityLevel,
+          location: prefs.region || prev.location,
+        }));
+      }
     }
-  }, [preferences, userPreferences]);
+  }, [user, preferences, userPreferences]);
 
-  // Filter jobs
+  // Load jobs from API với cache
   useEffect(() => {
+    const loadJobs = async () => {
+      // Kiểm tra cache trước
+      const cacheKey = "jobs";
+      const cacheFilters = { status: "active" };
+      const cachedData = getCache(cacheKey, cacheFilters);
+
+      if (cachedData) {
+        setJobs(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await jobService.getJobs({ status: "active" });
+        // Backend trả về: { success: true, data: { jobs: [...], pagination: {...} } }
+        const jobsData =
+          response.data.data?.jobs ||
+          response.data.jobs ||
+          response.data.data ||
+          response.data ||
+          [];
+        // Map _id to id for compatibility and ensure requirements is an array
+        const mappedJobs = Array.isArray(jobsData)
+          ? jobsData.map((job) => {
+              let requirements = [];
+              if (job.requirements) {
+                if (Array.isArray(job.requirements)) {
+                  requirements = job.requirements;
+                } else if (typeof job.requirements === 'string') {
+                  try {
+                    const parsed = JSON.parse(job.requirements);
+                    requirements = Array.isArray(parsed) ? parsed : [];
+                  } catch {
+                    requirements = [];
+                  }
+                }
+              }
+              return {
+                ...job,
+                id: job._id || job.id,
+                requirements: requirements,
+              };
+            })
+          : [];
+        setJobs(mappedJobs);
+        // Lưu vào cache
+        setCache(cacheKey, mappedJobs, cacheFilters);
+      } catch (error) {
+        console.error("Error loading jobs:", error);
+        showToast(
+          "Không thể tải danh sách công việc. Vui lòng thử lại sau.",
+          "error"
+        );
+        setJobs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Filter jobs - sử dụng useMemo để cache filtered results
+  const filteredJobs = useMemo(() => {
     let result = [...jobs];
 
     // Filter by search (không phân biệt có/không dấu)
     if (filters.search) {
-      const searchNormalized = removeVietnameseAccents(filters.search.toLowerCase());
+      const searchNormalized = removeVietnameseAccents(
+        filters.search.toLowerCase()
+      );
       result = result.filter(
         (job) =>
-          removeVietnameseAccents(job.title.toLowerCase()).includes(searchNormalized) ||
-          removeVietnameseAccents(job.company.toLowerCase()).includes(searchNormalized) ||
-          removeVietnameseAccents(job.description.toLowerCase()).includes(searchNormalized)
+          removeVietnameseAccents(job.title.toLowerCase()).includes(
+            searchNormalized
+          ) ||
+          removeVietnameseAccents(job.company.toLowerCase()).includes(
+            searchNormalized
+          ) ||
+          removeVietnameseAccents(job.description.toLowerCase()).includes(
+            searchNormalized
+          )
       );
     }
 
@@ -137,7 +239,9 @@ function JobSeekerPage() {
 
     // Filter by severity level
     if (filters.severityLevel) {
-      result = result.filter((job) => job.severityLevel === filters.severityLevel);
+      result = result.filter(
+        (job) => job.severityLevel === filters.severityLevel
+      );
     }
 
     // Filter by location
@@ -150,7 +254,7 @@ function JobSeekerPage() {
       result = result.filter((job) => job.status === filters.status);
     }
 
-    setFilteredJobs(result);
+    return result;
   }, [filters, jobs]);
 
   const handleFilterChange = (name, value) => {
@@ -176,7 +280,9 @@ function JobSeekerPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Tìm việc làm</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Tìm việc làm
+          </h1>
           <p className="text-gray-600">
             Tìm công việc phù hợp với khả năng của bạn
           </p>
@@ -299,13 +405,26 @@ function JobSeekerPage() {
         {/* Results count */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Tìm thấy <span className="font-semibold">{filteredJobs.length}</span>{" "}
-            công việc phù hợp
+            {isLoading ? (
+              "Đang tải..."
+            ) : (
+              <>
+                Tìm thấy{" "}
+                <span className="font-semibold">{filteredJobs.length}</span>{" "}
+                công việc phù hợp
+              </>
+            )}
           </p>
         </div>
 
         {/* Job List */}
-        {filteredJobs.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-md">
+            <p className="text-gray-600 text-lg">
+              Đang tải danh sách công việc...
+            </p>
+          </div>
+        ) : filteredJobs.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredJobs.map((job) => (
               <JobCard key={job.id} job={job} />

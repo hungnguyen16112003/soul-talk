@@ -1,16 +1,61 @@
 // Trang câu chuyện thành công
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { successStories as initialStories } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import useDataCacheStore from "../store/dataCacheStore";
 import { Toast, useToast } from "../components/Toast";
-import { FaTimes, FaPen, FaTrash } from "react-icons/fa";
+import { FaTimes, FaPen, FaTrash, FaStar, FaUser } from "react-icons/fa";
 import useAuthStore from "../store/authStore";
 
 function SuccessStoriesPage() {
   const { toast, showToast, hideToast } = useToast();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const [stories, setStories] = useState(initialStories);
+  const getCache = useDataCacheStore((state) => state.getCache);
+  const setCache = useDataCacheStore((state) => state.setCache);
+  const [stories, setStories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSuccessStories = async () => {
+      // Kiểm tra cache trước
+      const cacheKey = "successStories";
+      const cachedData = getCache(cacheKey);
+
+      if (cachedData) {
+        setStories(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await contentService.getSuccessStories();
+        // Backend trả về: { success: true, data: { successStories: [...], pagination: {...} } }
+        const storiesData = response.data.data?.successStories || response.data.successStories || response.data.data || response.data || [];
+        // Map _id to id for compatibility
+        const mappedStories = Array.isArray(storiesData) ? storiesData.map((story) => ({
+          ...story,
+          id: story._id || story.id,
+        })) : [];
+        setStories(mappedStories);
+        // Lưu vào cache
+        setCache(cacheKey, mappedStories);
+      } catch (error) {
+        console.error("Error loading success stories:", error);
+        showToast("Không thể tải danh sách câu chuyện. Vui lòng thử lại sau.", "error");
+        setStories([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSuccessStories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Memoize stories để tránh re-render không cần thiết
+  const memoizedStories = useMemo(() => stories, [stories]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [storyToDelete, setStoryToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -20,8 +65,8 @@ function SuccessStoriesPage() {
     if (user?.avatar && !user.avatar.startsWith("data:") && !user.avatar.startsWith("http")) {
       return user.avatar;
     }
-    // Nếu không, dùng emoji mặc định
-    return "👤";
+    // Nếu không, trả về null để dùng icon
+    return null;
   };
 
   const [newStory, setNewStory] = useState({
@@ -108,8 +153,9 @@ function SuccessStoriesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              🌟 Câu chuyện thành công
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <FaStar className="w-8 h-8 text-yellow-500" />
+              Câu chuyện thành công
             </h1>
             <p className="text-gray-600">
               Những câu chuyện truyền cảm hứng từ cộng đồng
@@ -124,8 +170,13 @@ function SuccessStoriesPage() {
           </button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {stories.map((story) => {
+        {isLoading ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-md">
+            <p className="text-gray-600 text-lg">Đang tải danh sách câu chuyện...</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {memoizedStories.map((story) => {
             const isOwner = user && story.userId === user.id;
             return (
               <div
@@ -146,7 +197,15 @@ function SuccessStoriesPage() {
                   className="cursor-pointer"
                 >
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="text-5xl flex-shrink-0">{story.image}</div>
+                    <div className="flex-shrink-0">
+                      {story.image && !story.image.startsWith("data:") && !story.image.startsWith("http") ? (
+                        <div className="text-5xl">{story.image}</div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 flex items-center justify-center">
+                          <FaUser className="w-8 h-8 text-white" />
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h2 className="text-xl font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-purple-600 transition-colors">
                         {story.name}
@@ -163,7 +222,8 @@ function SuccessStoriesPage() {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Modal chia sẻ câu chuyện */}

@@ -1,11 +1,19 @@
 // Component hiển thị thông tin công việc dạng card
 import { useNavigate } from "react-router-dom";
+import {
+  FaMapMarkerAlt,
+  FaMoneyBillWave,
+  FaBuilding,
+  FaCheckCircle,
+  FaPauseCircle,
+} from "react-icons/fa";
 
-function JobCard({ job, onEdit, onDelete, showActions = false }) {
+function JobCard({ job, onEdit, onDelete, showActions = false, isAdmin = false }) {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/job/${job.id}`);
+    const jobId = job._id || job.id;
+    navigate(`/job/${jobId}`);
   };
 
   return (
@@ -18,14 +26,24 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
           <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-1">
             {job.title}
           </h3>
-          <p className="text-purple-600 font-medium mb-2">{job.company}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <FaBuilding className="w-4 h-4 text-purple-600 flex-shrink-0" />
+            <p className="text-purple-600 font-medium">{job.company}</p>
+          </div>
+          {isAdmin && job.employer && (
+            <div className="mb-2">
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                👤 {job.employer?.name || job.employer?.email || "N/A"}
+              </span>
+            </div>
+          )}
           <div className="space-y-2 text-sm text-gray-600 mb-2">
             <div className="flex items-center gap-2 w-full">
-              <span>📍</span>
+              <FaMapMarkerAlt className="w-4 h-4 text-red-500 flex-shrink-0" />
               <span className="flex-1 break-words">{job.location}</span>
             </div>
             <div className="flex items-center gap-2 w-full">
-              <span>💰</span>
+              <FaMoneyBillWave className="w-4 h-4 text-green-600 flex-shrink-0" />
               <span className="flex-1 break-words">{job.salary}</span>
             </div>
           </div>
@@ -41,16 +59,26 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
               ))}
             </div>
           )}
-          <p className="text-gray-700 line-clamp-2 mb-2 flex-grow">{job.description}</p>
-          {job.requirements && job.requirements.length > 0 && (
+          <p className="text-gray-700 line-clamp-2 mb-2 flex-grow">
+            {job.description}
+          </p>
+          {job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0 && (
             <div className="mt-2">
               <p className="text-sm font-semibold text-gray-700 mb-1">
                 Yêu cầu:
               </p>
-              <ul className="text-sm text-gray-600 line-clamp-2">
-                {job.requirements.slice(0, 2).map((req, idx) => (
-                  <li key={idx}>• {req}</li>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {job.requirements.slice(0, 3).map((req, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">•</span>
+                    <span className="flex-1">{req}</span>
+                  </li>
                 ))}
+                {job.requirements.length > 3 && (
+                  <li className="text-amber-600 text-xs font-medium">
+                    +{job.requirements.length - 3} yêu cầu khác...
+                  </li>
+                )}
               </ul>
             </div>
           )}
@@ -58,15 +86,25 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
       </div>
 
       <div className="mt-auto pt-3 flex items-center justify-between">
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
+        <div
+          className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
             job.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-100 text-gray-700"
           }`}
         >
-          {job.status === "active" ? "Còn tuyển" : "Tạm dừng"}
-        </span>
+          {job.status === "active" ? (
+            <>
+              <FaCheckCircle className="w-3.5 h-3.5 text-green-600" />
+              <span>Còn tuyển</span>
+            </>
+          ) : (
+            <>
+              <FaPauseCircle className="w-3.5 h-3.5 text-gray-600" />
+              <span>Tạm dừng</span>
+            </>
+          )}
+        </div>
       </div>
 
       {showActions && (
@@ -96,5 +134,3 @@ function JobCard({ job, onEdit, onDelete, showActions = false }) {
 }
 
 export default JobCard;
-
-

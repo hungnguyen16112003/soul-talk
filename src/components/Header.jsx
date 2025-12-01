@@ -18,6 +18,7 @@ import {
   FaComments,
 } from "react-icons/fa";
 import useAuthStore from "../store/authStore";
+import NotificationDropdown from "./NotificationDropdown";
 
 function Header() {
   const location = useLocation();
@@ -25,8 +26,21 @@ function Header() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
 
-  // Tính toán isEmployer từ user role
+  // Helper function to build avatar URL
+  const getAvatarUrl = (avatar) => {
+    if (!avatar) return null;
+    if (avatar.startsWith("http")) return avatar;
+    if (avatar.startsWith("/")) {
+      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${avatar}`;
+    }
+    return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${avatar}`;
+  };
+
+  // Tính toán isEmployer từ user role - chỉ check role hiện tại, không check roles array
+  // Nếu user đang đăng nhập với role "jobseeker" thì không hiển thị UI employer
   const isEmployer = user?.role === "employer";
+  const isJobSeeker = user?.role === "jobseeker";
+  const isAdmin = user?.roles?.includes("admin");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -90,6 +104,7 @@ function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [moreMenuOpen]);
+
 
   // Kiểm tra route active
   const isActive = useCallback(
@@ -428,16 +443,24 @@ function Header() {
 
               <div className="flex items-center space-x-2 ml-2 relative">
                 {isAuthenticated ? (
-                  <div className="relative" ref={userMenuRef}>
-                    {/* User Avatar Button */}
-                    <button
-                      onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-amber-50 transition-colors cursor-pointer"
-                    >
+                  <>
+                    {/* Notification Bell */}
+                    <NotificationDropdown />
+                    
+                    <div className="relative" ref={userMenuRef}>
+                      {/* User Avatar Button */}
+                      <button
+                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-amber-50 transition-colors cursor-pointer"
+                      >
                       {user?.avatar ? (
                         <img
-                          src={user.avatar}
+                          src={getAvatarUrl(user.avatar)}
                           alt="Avatar"
+                          onError={(e) => {
+                            console.error("Header avatar load error:", user?.avatar);
+                            e.target.style.display = 'none';
+                          }}
                           className="w-8 h-8 rounded-full object-cover border-2 border-amber-600"
                         />
                       ) : (
@@ -462,8 +485,12 @@ function Header() {
                           <div className="flex items-center gap-3 mb-2">
                             {user?.avatar ? (
                               <img
-                                src={user.avatar}
+                                src={getAvatarUrl(user.avatar)}
                                 alt="Avatar"
+                                onError={(e) => {
+                                  console.error("Header dropdown avatar load error:", user?.avatar);
+                                  e.target.style.display = 'none';
+                                }}
                                 className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
                               />
                             ) : (
@@ -516,20 +543,20 @@ function Header() {
                         ) : (
                           <>
                             <Link
-                              to="/onboarding"
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                            >
-                              <FaEdit className="w-4 h-4 text-amber-600" />
-                              <span>Cập nhật hồ sơ</span>
-                            </Link>
-                            <Link
                               to="/manage-cv"
                               onClick={() => setUserMenuOpen(false)}
                               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
                             >
                               <FaFilePdf className="w-4 h-4 text-red-600" />
                               <span>Quản lý CV</span>
+                            </Link>
+                            <Link
+                              to="/my-applications"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                            >
+                              <FaFileAlt className="w-4 h-4 text-indigo-600" />
+                              <span>Đơn đã ứng tuyển</span>
                             </Link>
                           </>
                         )}
@@ -549,6 +576,7 @@ function Header() {
                       </div>
                     )}
                   </div>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -724,8 +752,12 @@ function Header() {
                       >
                         {user?.avatar ? (
                           <img
-                            src={user.avatar}
+                            src={getAvatarUrl(user.avatar)}
                             alt="Avatar"
+                            onError={(e) => {
+                              console.error("Mobile header avatar load error:", user?.avatar);
+                              e.target.style.display = 'none';
+                            }}
                             className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
                           />
                         ) : (
@@ -804,21 +836,6 @@ function Header() {
                           ) : (
                             <>
                               <Link
-                                to="/onboarding"
-                                onClick={() => {
-                                  setUserMenuOpen(false);
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
-                                  isActive("/onboarding")
-                                    ? "bg-amber-50 text-amber-700"
-                                    : ""
-                                }`}
-                              >
-                                <FaEdit className="w-4 h-4" />
-                                <span>Cập nhật hồ sơ</span>
-                              </Link>
-                              <Link
                                 to="/manage-cv"
                                 onClick={() => {
                                   setUserMenuOpen(false);
@@ -832,6 +849,21 @@ function Header() {
                               >
                                 <FaFilePdf className="w-4 h-4" />
                                 <span>Quản lý CV</span>
+                              </Link>
+                              <Link
+                                to="/my-applications"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200 ${
+                                  isActive("/my-applications")
+                                    ? "bg-amber-50 text-amber-700"
+                                    : ""
+                                }`}
+                              >
+                                <FaFileAlt className="w-4 h-4" />
+                                <span>Đơn đã ứng tuyển</span>
                               </Link>
                             </>
                           )}

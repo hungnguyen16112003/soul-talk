@@ -84,6 +84,12 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
     if (!formData.company) newErrors.company = "Vui lòng nhập tên công ty!";
     if (!formData.salary) newErrors.salary = "Vui lòng nhập mức lương!";
     if (!formData.description) newErrors.description = "Vui lòng nhập mô tả!";
+    if (!formData.disabilityTypes || formData.disabilityTypes.length === 0) {
+      newErrors.disabilityTypes = "Vui lòng chọn ít nhất một loại khuyết tật!";
+    }
+    if (!formData.severityLevel) {
+      newErrors.severityLevel = "Vui lòng chọn mức độ khuyết tật!";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -91,14 +97,9 @@ function CreateJobModal({ isOpen, onClose, onSave, editingJob = null }) {
       return;
     }
 
+    // Gọi onSave (sẽ xử lý API call và hiển thị toast)
     onSave(formData);
-    showToast(
-      editingJob ? "Cập nhật tin thành công!" : "Tạo tin thành công!",
-      "success"
-    );
-    setTimeout(() => {
-      onClose();
-    }, 1000);
+    // Không cần showToast ở đây vì onSave sẽ xử lý
   };
 
   if (!isOpen) return null;

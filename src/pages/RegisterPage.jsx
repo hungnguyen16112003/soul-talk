@@ -1,28 +1,37 @@
 // Trang đăng ký
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
+import { cvService } from "../services/cvService";
 import { FaEye, FaEyeSlash, FaUserTie, FaBriefcase } from "react-icons/fa";
 
 function RegisterPage() {
   const navigate = useNavigate();
   const register = useAuthStore((state) => state.register);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { toast, showToast, hideToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Dữ liệu đăng ký mẫu (pre-filled)
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const [formData, setFormData] = useState({
-    name: "Nguyễn Văn Demo",
-    email: "demo@example.com",
-    password: "demo123",
-    confirmPassword: "demo123",
-    phone: "0123456789",
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
     role: "jobseeker", // employer hoặc jobseeker
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   // Xử lý thay đổi input
   const handleChange = (e) => {
@@ -49,7 +58,7 @@ function RegisterPage() {
   };
 
   // Xử lý submit đăng ký
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation
@@ -63,6 +72,9 @@ function RegisterPage() {
     if (!formData.password) {
       newErrors.password = "Vui lòng nhập mật khẩu!";
     }
+    if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự!";
+    }
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Mật khẩu xác nhận không khớp!";
     }
@@ -75,29 +87,83 @@ function RegisterPage() {
       return;
     }
 
-    // Thực hiện đăng ký
-    const userData = {
-      id: `user-${Date.now()}`,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      role: formData.role,
-    };
+    setIsLoading(true);
 
-    register(userData);
-    showToast("Đăng ký thành công!", "success");
+    try {
+      // Thực hiện đăng ký qua API
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: formData.role,
+      };
 
-    // Nếu là người tìm việc
-    if (formData.role === "jobseeker") {
-      // Sau khi đăng ký người tìm việc, chuyển tới onboarding
-      setTimeout(() => {
-        navigate("/onboarding");
-      }, 1000);
-    } else {
-      // Redirect cho nhà tuyển dụng
-      setTimeout(() => {
-        navigate("/employer");
-      }, 1000);
+      const result = await register(userData);
+
+      if (result && result.success) {
+        showToast("Đăng ký thành công!", "success");
+
+        // Wait for Zustand persist to complete
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Force check state
+        const currentState = useAuthStore.getState();
+
+        // Verify authentication was set
+        if (currentState.isAuthenticated) {
+          // Check if user has CVs (only for jobseeker role)
+          if (formData.role === "jobseeker") {
+            try {
+              const cvsResponse = await cvService.getCVs();
+              const cvsData =
+                cvsResponse.data.data?.cvs || cvsResponse.data.cvs || [];
+              if (cvsData.length === 0) {
+                // No CVs, redirect to manage CV page
+                navigate("/manage-cv", { replace: true });
+                return;
+              }
+            } catch (error) {
+              // If error checking CVs, still redirect to home
+              console.error("Error checking CVs:", error);
+            }
+          }
+          // Has CVs or not jobseeker, redirect to home
+          navigate("/", { replace: true });
+        } else {
+          showToast(
+            "Đăng ký thành công nhưng có lỗi xảy ra. Vui lòng đăng nhập lại!",
+            "warning"
+          );
+          setTimeout(() => {
+            navigate("/login", { replace: true });
+          }, 2000);
+        }
+      } else {
+        const errorMessage =
+          result?.error || result?.message || "Đăng ký thất bại!";
+        showToast(errorMessage, "error");
+      }
+    } catch (error) {
+      // Hiển thị error message rõ ràng
+      let errorMessage = "Có lỗi xảy ra khi đăng ký!";
+      if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+
+      // Thêm thông tin về backend nếu không kết nối được
+      if (error?.status === 0 || error?.message?.includes("kết nối")) {
+        errorMessage =
+          "Không thể kết nối đến server. Vui lòng kiểm tra backend có đang chạy tại http://localhost:5000 không.";
+      }
+
+      showToast(errorMessage, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -323,9 +389,12 @@ function RegisterPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-full text-white animate-gradient-slide shadow-md hover:shadow-xl transition-transform duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
+                isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
             >
-              Đăng ký
+              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
             </button>
           </div>
         </form>

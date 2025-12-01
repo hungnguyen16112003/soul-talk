@@ -1,24 +1,68 @@
 // Trang chi tiết hướng nghiệp
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { careerGuidanceArticles } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import { Toast, useToast } from "../components/Toast";
 import { FaArrowLeft, FaMapMarkerAlt, FaPhone, FaEnvelope, FaGlobe, FaFacebook, FaUser, FaCalendarAlt } from "react-icons/fa";
 
 function CareerGuidanceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const article = careerGuidanceArticles.find((a) => a.id === parseInt(id));
+  const { toast, showToast, hideToast } = useToast();
+  const [article, setArticle] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!article) {
+  useEffect(() => {
+    const loadCareerGuidance = async () => {
+      try {
+        setIsLoading(true);
+        const response = await contentService.getCareerGuidance(id);
+        // Backend trả về: { success: true, data: { careerGuidance: {...} } }
+        const articleData = response.data.data?.careerGuidance || response.data.careerGuidance || response.data.data || response.data;
+        if (!articleData) {
+          throw new Error("Không tìm thấy bài viết");
+        }
+        setArticle({
+          ...articleData,
+          id: articleData._id || articleData.id,
+          author: articleData.author || "",
+          location: articleData.location || articleData.category || "",
+          date: articleData.date || new Date(articleData.createdAt).toLocaleDateString("vi-VN"),
+        });
+      } catch (error) {
+        console.error("Error loading career guidance:", error);
+        showToast("Không thể tải thông tin bài viết. Vui lòng thử lại sau.", "error");
+        setTimeout(() => {
+          navigate("/career-guidance");
+        }, 2000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadCareerGuidance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading || !article) {
     return (
       <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài viết</h1>
-          <button
-            onClick={() => navigate("/career-guidance")}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Quay lại
-          </button>
+          {isLoading ? (
+            <p className="text-gray-600">Đang tải...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài viết</h1>
+              <button
+                onClick={() => navigate("/career-guidance")}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                Quay lại
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -150,6 +194,12 @@ function CareerGuidanceDetailPage() {
           </div>
         </div>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

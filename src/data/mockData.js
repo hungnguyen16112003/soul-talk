@@ -1598,6 +1598,8 @@ export const careerGuidanceArticles = [
     address: "Xóm 8 xã Nghi Phú - Tp Vinh - Nghệ An",
     contact: "(0238) 3851599",
     website: "https://giaoducdaynghenguoikhuyettatnghean.edu.vn",
+    email: null,
+    fanpage: null,
   },
   {
     id: 10,
@@ -1613,6 +1615,7 @@ export const careerGuidanceArticles = [
       "0255.3961.616 – 0903.904.143 chị Hà GĐ – 0914.762.879 chị Hương PGĐ – 0908.879.994 chị Nhung PGĐ",
     email: "trungtam@vohongson.edu.vn",
     website: "http://vohongson.edu.vn",
+    fanpage: null,
   },
   // Miền Nam
   {
@@ -1656,6 +1659,9 @@ export const careerGuidanceArticles = [
     location: "Miền Nam",
     address: "87 Đoàn Thị Liên, Phường Phú Lợi, TP. TDM, Bình Dương",
     contact: "0274 3897 205 – 0274 3856 290",
+    email: null,
+    website: null,
+    fanpage: null,
   },
   {
     id: 14,

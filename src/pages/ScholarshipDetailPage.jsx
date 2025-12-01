@@ -1,24 +1,77 @@
 // Trang chi tiết học bổng
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { scholarships } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import { Toast, useToast } from "../components/Toast";
 import { FaArrowLeft, FaMapMarkerAlt, FaEnvelope, FaBuilding, FaCheckCircle, FaFileAlt, FaMoneyBillWave, FaGlobe, FaPhone } from "react-icons/fa";
 
 function ScholarshipDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const scholarship = scholarships.find((s) => s.id === parseInt(id));
+  const { toast, showToast, hideToast } = useToast();
+  const [scholarship, setScholarship] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!scholarship) {
+  useEffect(() => {
+    const loadScholarship = async () => {
+      try {
+        setIsLoading(true);
+        const response = await contentService.getScholarship(id);
+        // Backend trả về: { success: true, data: { scholarship: {...} } }
+        const scholarshipData = response.data.data?.scholarship || response.data.scholarship || response.data.data || response.data;
+        if (!scholarshipData) {
+          throw new Error("Không tìm thấy học bổng");
+        }
+        // Parse content to extract requirements and documents if needed
+        const content = scholarshipData.content || "";
+        const requirements = content.includes("Yêu cầu:") 
+          ? content.split("Yêu cầu:")[1]?.split("\n\n")[0]?.split("\n").filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim())
+          : [];
+        const documents = content.includes("Giấy tờ cần thiết:")
+          ? content.split("Giấy tờ cần thiết:")[1]?.split("\n\n")[0]?.split("\n").filter(l => l.trim().startsWith("-")).map(l => l.trim().substring(1).trim())
+          : [];
+        
+        setScholarship({
+          ...scholarshipData,
+          id: scholarshipData._id || scholarshipData.id,
+          organization: scholarshipData.organization || "",
+          requirements: requirements.length > 0 ? requirements : scholarshipData.requirements || [],
+          documents: documents.length > 0 ? documents : scholarshipData.documents || [],
+        });
+      } catch (error) {
+        console.error("Error loading scholarship:", error);
+        showToast("Không thể tải thông tin học bổng. Vui lòng thử lại sau.", "error");
+        setTimeout(() => {
+          navigate("/scholarships");
+        }, 2000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadScholarship();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading || !scholarship) {
     return (
       <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy học bổng</h1>
-          <button
-            onClick={() => navigate("/scholarships")}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Quay lại
-          </button>
+          {isLoading ? (
+            <p className="text-gray-600">Đang tải...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy học bổng</h1>
+              <button
+                onClick={() => navigate("/scholarships")}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                Quay lại
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -106,13 +159,15 @@ function ScholarshipDetailPage() {
           )}
 
           <div className="space-y-4 mb-6">
-            <div className="flex items-start gap-3">
-              <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Địa điểm</h4>
-                <p className="text-gray-700">{scholarship.location}</p>
+            {scholarship.location && (
+              <div className="flex items-start gap-3">
+                <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Địa điểm</h4>
+                  <p className="text-gray-700">{scholarship.location}</p>
+                </div>
               </div>
-            </div>
+            )}
 
             {scholarship.contact && (
               <div className="flex items-start gap-3">
@@ -158,6 +213,12 @@ function ScholarshipDetailPage() {
           </div>
         </div>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

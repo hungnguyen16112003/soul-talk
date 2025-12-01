@@ -1,7 +1,9 @@
 // Trang chủ mới với phần câu chuyện thành công
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { successStories } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import useDataCacheStore from "../store/dataCacheStore";
+import { Toast, useToast } from "../components/Toast";
 import {
   FaCalendarAlt,
   FaArrowRight,
@@ -34,9 +36,56 @@ const getExcerpt = (fullText, limit = 420) => {
 
 function HomePage() {
   const navigate = useNavigate();
-  const featuredStory = successStories[0];
-  const galleryStories = successStories.slice(1, 5);
-  const listStories = successStories.slice(1);
+  const { toast, showToast, hideToast } = useToast();
+  const getCache = useDataCacheStore((state) => state.getCache);
+  const setCache = useDataCacheStore((state) => state.setCache);
+  const [successStories, setSuccessStories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSuccessStories = async () => {
+      // Kiểm tra cache trước
+      const cacheKey = "successStories";
+      const cachedData = getCache(cacheKey);
+
+      if (cachedData) {
+        setSuccessStories(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await contentService.getSuccessStories();
+        // Backend trả về: { success: true, data: { successStories: [...], pagination: {...} } }
+        const stories = response.data.data?.successStories || response.data.successStories || response.data.data || response.data || [];
+        // Map _id to id for compatibility
+        const mappedStories = Array.isArray(stories) ? stories.map((story) => ({
+          ...story,
+          id: story._id || story.id,
+        })) : [];
+        setSuccessStories(mappedStories);
+        // Lưu vào cache
+        setCache(cacheKey, mappedStories);
+      } catch (error) {
+        console.error("Error loading success stories:", error);
+        showToast("Không thể tải câu chuyện thành công. Vui lòng thử lại sau.", "error");
+        setSuccessStories([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSuccessStories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Memoize success stories để tránh re-render không cần thiết
+  const memoizedSuccessStories = useMemo(() => successStories, [successStories]);
+
+  const featuredStory = useMemo(() => memoizedSuccessStories[0], [memoizedSuccessStories]);
+  const galleryStories = useMemo(() => memoizedSuccessStories.slice(1, 5), [memoizedSuccessStories]);
+  const listStories = useMemo(() => memoizedSuccessStories.slice(1), [memoizedSuccessStories]);
 
   const featuredExcerpt = useMemo(
     () => getExcerpt(featuredStory?.story || ""),
@@ -133,10 +182,15 @@ function HomePage() {
               </button>
             </div>
 
-            <div className="grid lg:grid-cols-[1.2fr,0.8fr] gap-10">
-              {/* Left column */}
-              <div className="space-y-6">
-                {featuredStory && (
+            {isLoading ? (
+              <div className="bg-white rounded-xl p-12 text-center shadow-md">
+                <p className="text-gray-600 text-lg">Đang tải câu chuyện thành công...</p>
+              </div>
+            ) : (
+              <div className="grid lg:grid-cols-[1.2fr,0.8fr] gap-10">
+                {/* Left column */}
+                <div className="space-y-6">
+                  {featuredStory && (
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Video/Ảnh bên trái - 50% */}
                     {featuredStory.videoUrl ? (
@@ -265,9 +319,16 @@ function HomePage() {
                 ))}
               </div>
             </div>
+            )}
           </div>
         </section>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

@@ -1,24 +1,74 @@
 // Trang chi tiết dịch vụ chăm sóc sức khỏe
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { healthCareServices } from "../data/mockData";
+import { contentService } from "../services/contentService";
+import { Toast, useToast } from "../components/Toast";
 import { FaArrowLeft, FaMapMarkerAlt, FaPhone, FaHospital, FaEnvelope, FaGlobe, FaFax, FaFacebook, FaStar } from "react-icons/fa";
 
 function HealthCareDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const service = healthCareServices.find((s) => s.id === parseInt(id));
+  const { toast, showToast, hideToast } = useToast();
+  const [service, setService] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!service) {
+  useEffect(() => {
+    const loadHealthCare = async () => {
+      try {
+        setIsLoading(true);
+        const response = await contentService.getHealthCare(id);
+        // Backend trả về: { success: true, data: { healthcare: {...} } }
+        const healthCareData = response.data.data?.healthcare || response.data.data?.healthCare || response.data.healthcare || response.data.healthCare || response.data.data || response.data;
+        if (!healthCareData) {
+          throw new Error("Không tìm thấy dịch vụ");
+        }
+        // Parse content to extract review if needed
+        const content = healthCareData.content || "";
+        const review = content.includes("Đánh giá:") 
+          ? content.split("Đánh giá:")[1]?.trim()
+          : healthCareData.review || null;
+        
+        setService({
+          ...healthCareData,
+          id: healthCareData._id || healthCareData.id,
+          hospital: healthCareData.hospital || healthCareData.title,
+          location: healthCareData.location || healthCareData.region,
+          review: review,
+        });
+      } catch (error) {
+        console.error("Error loading healthcare:", error);
+        showToast("Không thể tải thông tin dịch vụ. Vui lòng thử lại sau.", "error");
+        setTimeout(() => {
+          navigate("/healthcare");
+        }, 2000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadHealthCare();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading || !service) {
     return (
       <div className="page-wrapper min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy dịch vụ</h1>
-          <button
-            onClick={() => navigate("/healthcare")}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Quay lại
-          </button>
+          {isLoading ? (
+            <p className="text-gray-600">Đang tải...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy dịch vụ</h1>
+              <button
+                onClick={() => navigate("/healthcare")}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                Quay lại
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -57,7 +107,7 @@ function HealthCareDetailPage() {
           </div>
 
           <div className="space-y-4 mb-6">
-            {service.address && (
+            {service.address ? (
               <div className="flex items-start gap-3">
                 <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
                 <div>
@@ -65,15 +115,15 @@ function HealthCareDetailPage() {
                   <p className="text-gray-700 whitespace-pre-line">{service.address}</p>
                 </div>
               </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Khu vực</h4>
-                <p className="text-gray-700">{service.location}</p>
+            ) : service.location ? (
+              <div className="flex items-start gap-3">
+                <FaMapMarkerAlt className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Khu vực</h4>
+                  <p className="text-gray-700">{service.location}</p>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {service.contact && (
               <div className="flex items-start gap-3">
@@ -158,6 +208,12 @@ function HealthCareDetailPage() {
           </div>
         </div>
       </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }

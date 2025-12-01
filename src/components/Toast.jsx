@@ -1,28 +1,40 @@
 // Component Toast để hiển thị thông báo
-import { useEffect, useState } from "react";
-import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaTimes } from "react-icons/fa";
+import { useEffect, useState, useCallback } from "react";
+import {
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaTimes,
+} from "react-icons/fa";
 
-export const Toast = ({ message, type = "success", isVisible, onClose, duration = 3000 }) => {
-  const [shouldRender, setShouldRender] = useState(isVisible);
+export const Toast = ({
+  message,
+  type = "success",
+  isVisible,
+  onClose,
+  duration = 5000,
+}) => {
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+    }
+  }, [onClose]);
 
+  // Auto close timer
   useEffect(() => {
-    if (isVisible) {
-      setShouldRender(true);
+    if (isVisible && message) {
+      // Error messages hiển thị lâu hơn
+      const toastDuration = type === "error" ? 6000 : duration;
       const timer = setTimeout(() => {
         handleClose();
-      }, duration);
+      }, toastDuration);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, duration]);
+  }, [isVisible, message, duration, type, handleClose]);
 
-  const handleClose = () => {
-    setShouldRender(false);
-    setTimeout(() => {
-      if (onClose) onClose();
-    }, 300);
-  };
-
-  if (!shouldRender && !isVisible) return null;
+  // Không render nếu không có message hoặc không visible
+  if (!message || !isVisible) return null;
 
   const icons = {
     success: <FaCheckCircle className="text-green-500" />,
@@ -40,19 +52,29 @@ export const Toast = ({ message, type = "success", isVisible, onClose, duration 
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 min-w-[300px] max-w-md p-4 rounded-lg shadow-lg border ${bgColors[type]} transform transition-all duration-300 ${
-        isVisible && shouldRender ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-      }`}
+      className={`fixed top-27 right-4 min-w-[300px] max-w-md p-4 rounded-lg shadow-2xl border ${bgColors[type]} transform transition-all duration-300 translate-x-0 opacity-100`}
+      role="alert"
+      aria-live="assertive"
+      style={{
+        zIndex: 100,
+        pointerEvents: "auto",
+        position: "fixed",
+      }}
     >
       <div className="flex items-start gap-3">
         <div className="text-xl">{icons[type]}</div>
         <div className="flex-1">
-          <p className={`font-medium ${
-            type === "success" ? "text-green-800" :
-            type === "error" ? "text-red-800" :
-            type === "warning" ? "text-yellow-800" :
-            "text-blue-800"
-          }`}>
+          <p
+            className={`font-medium ${
+              type === "success"
+                ? "text-green-800"
+                : type === "error"
+                ? "text-red-800"
+                : type === "warning"
+                ? "text-yellow-800"
+                : "text-blue-800"
+            }`}
+          >
             {message}
           </p>
         </div>
@@ -76,9 +98,12 @@ export const useToast = () => {
   });
 
   const showToast = (message, type = "success") => {
+    // Đảm bảo message không rỗng
+    if (!message) return;
+
     setToast({
       isVisible: true,
-      message,
+      message: String(message), // Đảm bảo message là string
       type,
     });
   };
@@ -95,4 +120,3 @@ export const useToast = () => {
 };
 
 export default Toast;
-

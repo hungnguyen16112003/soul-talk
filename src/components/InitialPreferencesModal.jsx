@@ -1,12 +1,21 @@
 // Modal chọn thông tin ban đầu: miền, loại khuyết tật, mức độ
 import { useState } from "react";
-import { FaMapMarkerAlt, FaTimes, FaCheck } from "react-icons/fa";
+import { 
+  FaMapMarkerAlt, 
+  FaTimes, 
+  FaCheck, 
+  FaDeaf,
+  FaEye,
+  FaWheelchair,
+  FaBrain,
+  FaHandsHelping
+} from "react-icons/fa";
 import { disabilityTypes, severityLevels } from "../data/mockData";
 
 const regions = [
-  { id: "mien-bac", name: "Miền Bắc", icon: "🏔️" },
-  { id: "mien-trung", name: "Miền Trung", icon: "🌊" },
-  { id: "mien-nam", name: "Miền Nam", icon: "🌴" },
+  { id: "mien-bac", name: "Miền Bắc" },
+  { id: "mien-trung", name: "Miền Trung" },
+  { id: "mien-nam", name: "Miền Nam" },
 ];
 
 function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
@@ -173,22 +182,49 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
               năng của bạn.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {disabilityTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setSelectedDisability(type)}
-                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                    selectedDisability?.id === type.id
-                      ? "border-amber-500 bg-amber-50 scale-105"
-                      : "border-gray-300 hover:border-amber-300"
-                  }`}
-                >
-                  <div className="text-3xl mb-2">{type.icon}</div>
-                  <div className="font-semibold text-gray-900 text-sm">
-                    {type.name}
-                  </div>
-                </button>
-              ))}
+              {disabilityTypes.map((type) => {
+                // Map icon name to React Icon component
+                let IconComponent = null;
+                let iconColor = "text-amber-600";
+                
+                if (type.name === "Khiếm thính") {
+                  IconComponent = FaDeaf;
+                  iconColor = "text-blue-600";
+                } else if (type.name === "Khiếm thị") {
+                  IconComponent = FaEye;
+                  iconColor = "text-purple-600";
+                } else if (type.name === "Vận động") {
+                  IconComponent = FaWheelchair;
+                  iconColor = "text-green-600";
+                } else if (type.name === "Trí tuệ") {
+                  IconComponent = FaBrain;
+                  iconColor = "text-pink-600";
+                } else if (type.name === "Khác") {
+                  IconComponent = FaHandsHelping;
+                  iconColor = "text-amber-600";
+                }
+
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => setSelectedDisability(type)}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                      selectedDisability?.id === type.id
+                        ? "border-amber-500 bg-amber-50 scale-105"
+                        : "border-gray-300 hover:border-amber-300"
+                    }`}
+                  >
+                    {IconComponent && (
+                      <div className="flex justify-center mb-2">
+                        <IconComponent className={`w-12 h-12 ${iconColor}`} />
+                      </div>
+                    )}
+                    <div className="font-semibold text-gray-900 text-sm text-center">
+                      {type.name}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

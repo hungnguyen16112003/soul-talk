@@ -20,9 +20,9 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, job }) {
             Hủy
           </button>
           <button
-            onClick={() => {
-              onConfirm();
-              onClose();
+            onClick={async () => {
+              await onConfirm();
+              // onClose sẽ được gọi trong confirmDelete sau khi xóa thành công
             }}
             className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
           >
@@ -35,5 +35,3 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, job }) {
 }
 
 export default DeleteConfirmModal;
-
-

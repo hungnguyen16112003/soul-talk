@@ -1,12 +1,11 @@
 // Trang quản lý cho nhà tuyển dụng
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import JobCard from "../components/JobCard";
-import CreateJobModal from "../components/CreateJobModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import { mockJobs } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
+import { jobService } from "../services/jobService";
 import { FaPlusCircle, FaClipboardList } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
 
@@ -22,14 +21,27 @@ const removeVietnameseAccents = (str) => {
 
 function EmployerPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
+  // Helper function to check if user has employer access
+  const hasEmployerAccess = () => {
+    if (!isAuthenticated || !user) return false;
+    const userRoles = user?.roles || [];
+    const currentRole = user?.role;
+    const hasRole =
+      userRoles.includes("employer") || userRoles.includes("admin");
+    const isUsingRole =
+      currentRole === "employer" ||
+      (userRoles.includes("admin") && currentRole !== "jobseeker");
+    return hasRole && isUsingRole;
+  };
+
   const { toast, showToast, hideToast } = useToast();
-  const [jobs, setJobs] = useState([...mockJobs]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState(null);
   const [jobToDelete, setJobToDelete] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
@@ -39,10 +51,68 @@ function EmployerPage() {
 
   // Route protection
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "employer") {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (!hasEmployerAccess()) {
       navigate("/login");
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Check if user is admin
+  const isAdmin = useMemo(() => {
+    const userRoles = user?.roles || [];
+    return userRoles.includes("admin");
+  }, [user]);
+
+  // Load jobs from API
+  useEffect(() => {
+    const loadJobs = async () => {
+      if (!hasEmployerAccess()) return;
+
+      try {
+        setIsLoading(true);
+        const response = await jobService.getMyJobs();
+        if (response && response.success && response.data) {
+          const jobsData = response.data.jobs || [];
+          // Map _id to id for compatibility and ensure requirements is an array
+          const mappedJobs = jobsData.map((job) => {
+            let requirements = [];
+            if (job.requirements) {
+              if (Array.isArray(job.requirements)) {
+                requirements = job.requirements;
+              } else if (typeof job.requirements === 'string') {
+                try {
+                  const parsed = JSON.parse(job.requirements);
+                  requirements = Array.isArray(parsed) ? parsed : [];
+                } catch {
+                  requirements = [];
+                }
+              }
+            }
+            return {
+              ...job,
+              id: job._id || job.id,
+              requirements: requirements,
+            };
+          });
+          setJobs(mappedJobs);
+        }
+      } catch (error) {
+        const errorMessage =
+          error?.error || error?.message || "Không thể tải danh sách công việc";
+        showToast(errorMessage, "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (hasEmployerAccess()) {
+      loadJobs();
+    }
+  }, [isAuthenticated, user, location.key]);
 
   const filteredJobs = useMemo(() => {
     let result = [...jobs];
@@ -80,41 +150,53 @@ function EmployerPage() {
     paused: jobs.filter((j) => j.status === "paused").length,
   };
 
-  const handleCreateJob = (jobData) => {
-    const newJob = {
-      ...jobData,
-      id: Date.now(),
-      employerAvatar: "👨‍💼",
-    };
-    setJobs((prev) => [...prev, newJob]);
-    showToast("Tạo tin tuyển dụng thành công!", "success");
-  };
 
   const handleEditJob = (job) => {
-    setEditingJob(job);
-    setIsCreateModalOpen(true);
+    navigate("/employer/create-job", { state: { editingJob: job } });
   };
 
-  const handleUpdateJob = (jobData) => {
-    setJobs((prev) =>
-      prev.map((job) =>
-        job.id === editingJob.id ? { ...job, ...jobData } : job
-      )
-    );
-    setEditingJob(null);
-    showToast("Cập nhật tin tuyển dụng thành công!", "success");
-  };
 
   const handleDeleteJob = (job) => {
     setJobToDelete(job);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (jobToDelete) {
-      setJobs((prev) => prev.filter((job) => job.id !== jobToDelete.id));
-      showToast("Xóa tin tuyển dụng thành công!", "success");
-      setJobToDelete(null);
+  const confirmDelete = async () => {
+    if (!jobToDelete) return;
+
+    const jobId = jobToDelete._id || jobToDelete.id;
+    if (!jobId) {
+      showToast("Không tìm thấy ID công việc cần xóa", "error");
+      return;
+    }
+
+    try {
+      const response = await jobService.deleteJob(jobId);
+      if (response && response.success) {
+        // Reload jobs from API
+        const jobsResponse = await jobService.getMyJobs();
+        if (jobsResponse && jobsResponse.success && jobsResponse.data) {
+          const jobsData = jobsResponse.data.jobs || [];
+          const mappedJobs = jobsData.map((job) => ({
+            ...job,
+            id: job._id || job.id,
+          }));
+          setJobs(mappedJobs);
+        }
+        showToast("Xóa tin tuyển dụng thành công!", "success");
+        setJobToDelete(null);
+        setIsDeleteModalOpen(false);
+      } else {
+        const errorMessage =
+          response?.error || response?.message || "Xóa tin tuyển dụng thất bại";
+        showToast(errorMessage, "error");
+      }
+    } catch (error) {
+      const errorMessage =
+        error?.error ||
+        error?.message ||
+        "Có lỗi xảy ra khi xóa tin tuyển dụng";
+      showToast(errorMessage, "error");
     }
   };
 
@@ -125,7 +207,7 @@ function EmployerPage() {
     }));
   };
 
-  if (!isAuthenticated || user?.role !== "employer") {
+  if (!hasEmployerAccess()) {
     return null;
   }
 
@@ -141,20 +223,30 @@ function EmployerPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Welcome Banner */}
         <div className="animate-gradient-slide rounded-xl p-8 text-white mb-8 shadow-lg overflow-hidden">
-          <h1 className="text-3xl font-bold mb-2">
-            Chào mừng, {user?.name || "Nhà tuyển dụng"}!
-          </h1>
-          <p className="text-white/90">
-            Quản lý tin tuyển dụng và tìm kiếm nhân tài phù hợp
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">
+                Chào mừng, {user?.name || "Nhà tuyển dụng"}!
+              </h1>
+              <p className="text-white/90">
+                {isAdmin
+                  ? "Quản lý toàn bộ tin tuyển dụng trên hệ thống"
+                  : "Quản lý tin tuyển dụng và tìm kiếm nhân tài phù hợp"}
+              </p>
+            </div>
+            {isAdmin && (
+              <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                🔑 Chế độ Admin
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <button
             onClick={() => {
-              setEditingJob(null);
-              setIsCreateModalOpen(true);
+              navigate("/employer/create-job");
             }}
             className="bg-white text-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-left border-2 border-purple-200 cursor-pointer"
           >
@@ -255,20 +347,33 @@ function EmployerPage() {
 
         {/* Jobs List */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Danh sách tin tuyển dụng ({filteredJobs.length})
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Danh sách tin tuyển dụng ({filteredJobs.length})
+            </h2>
+            {isAdmin && (
+              <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                Đang xem tất cả tin tuyển dụng
+              </span>
+            )}
+          </div>
         </div>
 
-        {filteredJobs.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-md">
+            <div className="text-4xl mb-4 animate-pulse">⏳</div>
+            <p className="text-gray-600">Đang tải danh sách công việc...</p>
+          </div>
+        ) : filteredJobs.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredJobs.map((job) => (
               <JobCard
-                key={job.id}
+                key={job._id || job.id}
                 job={job}
                 showActions={true}
                 onEdit={handleEditJob}
                 onDelete={handleDeleteJob}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
@@ -282,10 +387,7 @@ function EmployerPage() {
               Tạo tin tuyển dụng đầu tiên để bắt đầu tìm kiếm nhân tài
             </p>
             <button
-              onClick={() => {
-                setEditingJob(null);
-                setIsCreateModalOpen(true);
-              }}
+              onClick={() => navigate("/employer/create-job")}
               className="bg-white text-gray-900 px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all border-2 border-purple-200 cursor-pointer"
             >
               <span className="flex items-center justify-center gap-2 font-semibold">
@@ -312,17 +414,6 @@ function EmployerPage() {
       </div>
 
       {/* Modals */}
-      <CreateJobModal
-        key={editingJob?.id || "new"}
-        isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setEditingJob(null);
-        }}
-        onSave={editingJob ? handleUpdateJob : handleCreateJob}
-        editingJob={editingJob}
-      />
-
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
