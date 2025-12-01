@@ -119,14 +119,10 @@ function MyApplicationsPage() {
 
   // Initial load - only when component mounts and user is authenticated
   useEffect(() => {
-    if (
-      isAuthenticated &&
-      user?.role === "jobseeker" &&
-      applications.length === 0
-    ) {
+    if (isAuthenticated && user?.role === "jobseeker") {
       loadApplications(1, false);
     }
-  }, [isAuthenticated, user?.role, applications.length, loadApplications]); // Include all dependencies
+  }, [isAuthenticated, user?.role]); // Remove loadApplications to prevent unnecessary re-runs
 
   // Filter applications
   useEffect(() => {
@@ -407,6 +403,8 @@ function MyApplicationsPage() {
                 <div className="text-center pt-4">
                   <button
                     onClick={() => {
+                      if (isLoading) return; // Prevent multiple clicks
+
                       const nextVisible = Math.min(
                         visibleCount + 5,
                         filteredApplications.length
@@ -415,8 +413,7 @@ function MyApplicationsPage() {
 
                       if (
                         hasMore &&
-                        filteredApplications.length - nextVisible <= 5 &&
-                        !isLoading
+                        filteredApplications.length - nextVisible <= 5
                       ) {
                         const nextPage = currentPage + 1;
                         setCurrentPage(nextPage);

@@ -38,6 +38,7 @@ function JobSeekerPage() {
 
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(15); // Hiển thị 15 jobs đầu tiên
 
   // Hàm phân loại ngành nghề
   const getJobCategory = (job) => {
@@ -152,7 +153,7 @@ function JobSeekerPage() {
 
       try {
         setIsLoading(true);
-        const response = await jobService.getJobs({ status: "active" });
+        const response = await jobService.getJobs({ status: "active", limit: 100 }); // Load up to 100 jobs
         // Backend trả về: { success: true, data: { jobs: [...], pagination: {...} } }
         const jobsData =
           response.data.data?.jobs ||
@@ -257,11 +258,25 @@ function JobSeekerPage() {
     return result;
   }, [filters, jobs]);
 
+  // Jobs to display (limited by visibleCount)
+  const displayJobs = useMemo(() => {
+    return filteredJobs.slice(0, visibleCount);
+  }, [filteredJobs, visibleCount]);
+
+  // Check if we need to show "Load More" button
+  const hasMoreJobs = filteredJobs.length > visibleCount;
+
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // Reset visible count when filters change
+    setVisibleCount(15);
+  };
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + 15); // Load thêm 15 jobs
   };
 
   const clearFilters = () => {
@@ -409,9 +424,9 @@ function JobSeekerPage() {
               "Đang tải..."
             ) : (
               <>
-                Tìm thấy{" "}
-                <span className="font-semibold">{filteredJobs.length}</span>{" "}
-                công việc phù hợp
+                Hiển thị{" "}
+                <span className="font-semibold">{displayJobs.length}</span>{" "}
+                / {filteredJobs.length} công việc phù hợp
               </>
             )}
           </p>
@@ -424,12 +439,26 @@ function JobSeekerPage() {
               Đang tải danh sách công việc...
             </p>
           </div>
-        ) : filteredJobs.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+        ) : displayJobs.length > 0 ? (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {displayJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+
+            {/* Nút Xem thêm */}
+            {hasMoreJobs && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={handleLoadMore}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-8 py-3 rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-all font-medium"
+                >
+                  Xem thêm ({filteredJobs.length - visibleCount} công việc)
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="bg-white rounded-xl p-12 text-center shadow-md">
             <p className="text-gray-600 text-lg mb-4">
