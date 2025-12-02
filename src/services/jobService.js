@@ -5,15 +5,14 @@ export const jobService = {
   // Get all jobs with filters
   getJobs: async (filters = {}) => {
     const params = new URLSearchParams();
-    
+
     if (filters.search) params.append('search', filters.search);
     if (filters.category) params.append('category', filters.category);
     if (filters.disabilityType) params.append('disabilityType', filters.disabilityType);
     if (filters.severityLevel) params.append('severityLevel', filters.severityLevel);
     if (filters.location) params.append('location', filters.location);
     if (filters.status) params.append('status', filters.status);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    // Không truyền page và limit để lấy tất cả data
 
     return await api.get(`/jobs?${params.toString()}`);
   },

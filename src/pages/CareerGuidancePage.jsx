@@ -19,11 +19,12 @@ function CareerGuidancePage() {
   const [careerGuidanceArticles, setCareerGuidanceArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [locationFilter, setLocationFilter] = useState("");
+  const [visibleCount, setVisibleCount] = useState(10); // Hiển thị 10 bài viết đầu tiên
 
   useEffect(() => {
     const loadCareerGuidances = async () => {
       // Kiểm tra cache trước
-      const cacheKey = "careerGuidance";
+      const cacheKey = "careerGuidance_debug"; // Cache key mới để test
       const cachedData = getCache(cacheKey);
 
       if (cachedData) {
@@ -123,55 +124,81 @@ function CareerGuidancePage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredArticles.map((article) => (
-              <div
-                key={article.id}
-                onClick={() => handleCardClick(article)}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer flex flex-col h-full overflow-hidden"
-              >
-                <div className="p-6 flex flex-col flex-grow">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-purple-600 transition-colors">
-                    {article.title}
-                  </h2>
-                  <p className="text-sm text-purple-600 font-medium mb-2 line-clamp-1">
-                    {article.author}
-                  </p>
-                  <p className="text-gray-700 mb-4 line-clamp-3 flex-grow">
-                    {article.content}
-                  </p>
-                  <div className="mb-4 space-y-1">
-                    {article.location && (
-                      <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
-                        <FaMapMarkerAlt className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                        {article.location}
-                      </p>
-                    )}
-                    {article.address && (
-                      <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
-                        <FaBuilding className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                        {article.address.split("\n")[0].trim()}
-                      </p>
-                    )}
-                    {article.contact && (
-                      <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
-                        <FaPhone className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
-                        {article.contact
-                          .split(" – ")[0]
-                          .split(" hoặc ")[0]
-                          .trim()}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center mt-auto">
-                    <span className="text-xs text-gray-500 line-clamp-1">
-                      {article.date}
-                    </span>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredArticles.slice(0, visibleCount).map((article) => (
+                <div
+                  key={article.id}
+                  onClick={() => handleCardClick(article)}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer flex flex-col h-full overflow-hidden"
+                >
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-purple-600 transition-colors">
+                      {article.title}
+                    </h2>
+                    <p className="text-sm text-purple-600 font-medium mb-2 line-clamp-1">
+                      {article.author}
+                    </p>
+                    <p className="text-gray-700 mb-4 line-clamp-3 flex-grow">
+                      {article.content}
+                    </p>
+                    <div className="mb-4 space-y-1">
+                      {article.location && (
+                        <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
+                          <FaMapMarkerAlt className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                          {article.location}
+                        </p>
+                      )}
+                      {article.address && (
+                        <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
+                          <FaBuilding className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                          {article.address.split("\n")[0].trim()}
+                        </p>
+                      )}
+                      {article.contact && (
+                        <p className="text-sm text-gray-600 line-clamp-1 flex items-center gap-2">
+                          <FaPhone className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                          {article.contact
+                            .split(" – ")[0]
+                            .split(" hoặc ")[0]
+                            .trim()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-xs text-gray-500 line-clamp-1">
+                        {article.date}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Nút Xem thêm */}
+            {filteredArticles.length > 10 &&
+              visibleCount < filteredArticles.length && (
+                <div className="text-center pt-8">
+                  <button
+                    onClick={() => {
+                      // Tăng thêm 10 bài viết để hiển thị
+                      const nextVisible = Math.min(
+                        visibleCount + 10,
+                        filteredArticles.length
+                      );
+                      setVisibleCount(nextVisible);
+                    }}
+                    className="animate-gradient-slide text-[#7a5a15] px-6 py-3 rounded-lg hover:shadow-lg transition-all font-medium flex items-center space-x-2 mx-auto"
+                  >
+                    <span>
+                      Xem thêm (
+                      {Math.max(0, filteredArticles.length - visibleCount)} bài
+                      viết còn lại)
+                    </span>
+                  </button>
+                </div>
+              )}
+          </>
         )}
       </div>
       <Toast

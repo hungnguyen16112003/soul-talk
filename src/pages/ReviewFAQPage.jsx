@@ -11,7 +11,11 @@ import {
   FaStar,
   FaTrash,
 } from "react-icons/fa";
-import { faqService, commentService, ratingService } from "../services/faqService";
+import {
+  faqService,
+  commentService,
+  ratingService,
+} from "../services/faqService";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
 import socketService from "../services/socketService";
@@ -103,7 +107,8 @@ function ReviewFAQPage() {
     try {
       const response = await ratingService.getRatings(page, 50); // Load up to 50 ratings
 
-      const ratingsData = response.data?.data?.ratings || response.data?.ratings || [];
+      const ratingsData =
+        response.data?.data?.ratings || response.data?.ratings || [];
 
       const mappedRatings = Array.isArray(ratingsData)
         ? ratingsData.map((rating) => ({
@@ -138,9 +143,14 @@ function ReviewFAQPage() {
     }
 
     // Kiểm tra xem user đã đánh giá chưa
-    const userAlreadyRated = ratings.some(rating => rating.userId === user?.id);
+    const userAlreadyRated = ratings.some(
+      (rating) => rating.userId === user?.id
+    );
     if (userAlreadyRated) {
-      showToast("Bạn đã đánh giá rồi. Mỗi người chỉ được đánh giá một lần.", "warning");
+      showToast(
+        "Bạn đã đánh giá rồi. Mỗi người chỉ được đánh giá một lần.",
+        "warning"
+      );
       return;
     }
 
@@ -148,10 +158,11 @@ function ReviewFAQPage() {
     try {
       const response = await ratingService.createRating({
         rating: newRating,
-        comment: ratingText.trim() || null
+        comment: ratingText.trim() || null,
       });
 
-      const newRatingData = response.data?.data?.rating || response.data?.rating;
+      const newRatingData =
+        response.data?.data?.rating || response.data?.rating;
 
       if (newRatingData) {
         // Refresh ratings from server để đảm bảo đồng bộ
@@ -167,7 +178,8 @@ function ReviewFAQPage() {
       }
     } catch (error) {
       console.error("Error submitting rating:", error);
-      const errorMessage = error.response?.data?.error || "Có lỗi xảy ra, vui lòng thử lại!";
+      const errorMessage =
+        error.response?.data?.error || "Có lỗi xảy ra, vui lòng thử lại!";
       showToast(errorMessage, "error");
     } finally {
       setIsSubmittingRating(false);
@@ -178,7 +190,7 @@ function ReviewFAQPage() {
   const loadComments = async (page = 1, append = false) => {
     try {
       setIsLoadingComments(true);
-      const response = await commentService.getComments(page, 20);
+      const response = await commentService.getComments(page, 1000); // Load many comments
       const commentsData =
         response.data.data?.comments ||
         response.data.comments ||
@@ -190,13 +202,8 @@ function ReviewFAQPage() {
         response.data.data?.pagination || response.data.pagination || {};
       const total = pagination.total || 0;
       const skip = (page - 1) * 10;
-      const hasMoreData =
-        pagination.hasMore !== undefined
-          ? pagination.hasMore
-          : skip + commentsData.length < total;
-
-      setHasMore(hasMoreData);
-      setTotalComments(total);
+      // Không cần hasMore vì load tất cả comments một lần
+      // Không cần set totalComments vì không dùng cho nút xem thêm
 
       const mappedComments = Array.isArray(commentsData)
         ? commentsData.map((comment) => {
@@ -248,7 +255,14 @@ function ReviewFAQPage() {
             return true;
           });
 
-          return [...prev, ...newComments];
+          const updated = [...prev, ...newComments];
+
+          // Nếu số comments mới > visibleCount hiện tại, tăng visibleCount
+          if (updated.length > visibleCount) {
+            setVisibleCount(updated.length);
+          }
+
+          return updated;
         });
 
         if (appendedIds.length > 0) {
@@ -282,17 +296,18 @@ function ReviewFAQPage() {
     }
   };
 
-  // Load comments - ONLY ONCE on mount
+  // Load comments - ONLY ONCE on mount và chỉ khi đã đăng nhập
   useEffect(() => {
-    if (hasLoadedComments.current) return; // Prevent reload
+    if (hasLoadedComments.current || !isAuthenticated) return; // Prevent reload và chỉ load khi đã đăng nhập
     loadComments(1, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty array - run once
+  }, [isAuthenticated]); // Chạy lại khi authentication thay đổi
 
-  // Load ratings on component mount
+  // Load ratings on component mount và chỉ khi đã đăng nhập
   useEffect(() => {
+    if (!isAuthenticated) return; // Chỉ load khi đã đăng nhập
     loadRatings();
-  }, []); // Empty dependency array để chỉ chạy 1 lần
+  }, [isAuthenticated]); // Chạy lại khi authentication thay đổi
 
   // Socket.io realtime connection for comments and ratings
   useEffect(() => {
@@ -341,6 +356,12 @@ function ReviewFAQPage() {
           return prev;
         }
         const updated = [newComment, ...prev];
+
+        // Nếu số comments mới > visibleCount hiện tại, tăng visibleCount
+        if (updated.length > visibleCount) {
+          setVisibleCount(updated.length);
+        }
+
         return updated;
       });
 
@@ -436,7 +457,7 @@ function ReviewFAQPage() {
 
     const handleNewRating = (ratingData) => {
       setRatings((prev) => {
-        const exists = prev.some(rating => rating.id === ratingData.id);
+        const exists = prev.some((rating) => rating.id === ratingData.id);
         if (exists) return prev;
         return [ratingData, ...prev];
       });
@@ -446,7 +467,7 @@ function ReviewFAQPage() {
     const handleDeleteCommentSocket = (deleteData) => {
       const { commentId } = deleteData;
 
-      setComments((prev) => prev.filter(comment => comment.id !== commentId));
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
 
       showToast("Một bình luận đã được xóa!", "info");
     };
@@ -455,9 +476,9 @@ function ReviewFAQPage() {
       const { ratingId } = deleteData;
 
       setRatings((prev) => {
-        const exists = prev.some(rating => rating.id === ratingId);
+        const exists = prev.some((rating) => rating.id === ratingId);
         if (exists) {
-          return prev.filter(rating => rating.id !== ratingId);
+          return prev.filter((rating) => rating.id !== ratingId);
         }
         return prev;
       });
@@ -532,7 +553,15 @@ function ReviewFAQPage() {
       setComments((prev) => {
         const exists = prev.some((c) => normalizeId(c) === newCommentId);
         if (exists) return prev;
-        return [newComment, ...prev];
+
+        const updated = [newComment, ...prev];
+
+        // Nếu số comments mới > visibleCount hiện tại, tăng visibleCount
+        if (updated.length > visibleCount) {
+          setVisibleCount(updated.length);
+        }
+
+        return updated;
       });
 
       // Emit socket event
@@ -557,7 +586,9 @@ function ReviewFAQPage() {
 
   const handleDeleteComment = async (commentId) => {
     // Hiển thị modal xác nhận
-    const confirmed = window.confirm("Bạn có chắc chắn muốn xóa bình luận này?");
+    const confirmed = window.confirm(
+      "Bạn có chắc chắn muốn xóa bình luận này?"
+    );
 
     if (!confirmed) {
       return;
@@ -568,7 +599,7 @@ function ReviewFAQPage() {
       await commentService.deleteComment(commentId);
 
       // Remove comment from local state
-      setComments((prev) => prev.filter(comment => comment.id !== commentId));
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
 
       showToast("Đã xóa bình luận thành công!", "success");
 
@@ -576,7 +607,9 @@ function ReviewFAQPage() {
       socketService.emit("FE_DELETE_COMMENT", { commentId });
     } catch (error) {
       console.error("Error deleting comment:", error);
-      const errorMessage = error.response?.data?.error || "Không thể xóa bình luận. Vui lòng thử lại sau.";
+      const errorMessage =
+        error.response?.data?.error ||
+        "Không thể xóa bình luận. Vui lòng thử lại sau.";
       showToast(errorMessage, "error");
     } finally {
       setIsDeletingComment(false);
@@ -596,7 +629,7 @@ function ReviewFAQPage() {
       await ratingService.deleteRating(ratingId);
 
       // Remove rating from local state
-      setRatings((prev) => prev.filter(rating => rating.id !== ratingId));
+      setRatings((prev) => prev.filter((rating) => rating.id !== ratingId));
 
       showToast("Đã xóa đánh giá thành công!", "success");
 
@@ -604,13 +637,14 @@ function ReviewFAQPage() {
       socketService.emit("FE_DELETE_RATING", { ratingId });
     } catch (error) {
       console.error("Error deleting rating:", error);
-      const errorMessage = error.response?.data?.error || "Không thể xóa đánh giá. Vui lòng thử lại sau.";
+      const errorMessage =
+        error.response?.data?.error ||
+        "Không thể xóa đánh giá. Vui lòng thử lại sau.";
       showToast(errorMessage, "error");
     } finally {
       setIsDeletingRating(false);
     }
   };
-
 
   const handleSubmitReply = async (commentId) => {
     if (!replyText.trim()) return;
@@ -906,16 +940,19 @@ function ReviewFAQPage() {
                                       {formatDate(comment.date)}
                                     </span>
                                     {/* Nút xóa nếu user là tác giả */}
-                                    {isAuthenticated && comment.authorId === user?.id && (
-                                      <button
-                                        onClick={() => handleDeleteComment(comment.id)}
-                                        disabled={isDeletingComment}
-                                        className="text-red-500 hover:text-red-700 transition-colors p-1 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Xóa bình luận"
-                                      >
-                                        <FaTrash className="w-3 h-3" />
-                                      </button>
-                                    )}
+                                    {isAuthenticated &&
+                                      comment.authorId === user?.id && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteComment(comment.id)
+                                          }
+                                          disabled={isDeletingComment}
+                                          className="text-red-500 hover:text-red-700 transition-colors p-1 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                          title="Xóa bình luận"
+                                        >
+                                          <FaTrash className="w-3 h-3" />
+                                        </button>
+                                      )}
                                   </div>
                                 </div>
                                 <p className="text-gray-800 font-medium">
@@ -999,39 +1036,26 @@ function ReviewFAQPage() {
                         </div>
                       ))}
 
-                      {/* Nút Xem thêm - chỉ hiển thị khi tổng comments > 5 */}
-                      {totalComments > 5 &&
-                        (visibleCount < comments.length || hasMore) && (
+                      {/* Nút Xem thêm - chỉ hiển thị khi có nhiều hơn 5 comments */}
+                      {comments.length > 5 &&
+                        visibleCount < comments.length && (
                           <div className="text-center pt-4">
                             <button
                               onClick={() => {
-                                if (visibleCount < comments.length) {
-                                  // Còn dữ liệu trong state -> chỉ tăng thêm 5 item hiển thị
-                                  const nextVisible = Math.min(
-                                    visibleCount + 5,
-                                    comments.length
-                                  );
-                                  setVisibleCount(nextVisible);
-                                } else if (hasMore) {
-                                  // Đã hiển thị hết state, mới gọi API lấy thêm 20 comment vào state
-                                  const nextPage = currentPage + 1;
-                                  setCurrentPage(nextPage);
-                                  loadComments(nextPage, true);
-                                  // Không tăng visibleCount ngay, để lần nhấn tiếp theo hiển thị thêm 5 từ state mới
-                                }
+                                // Tăng thêm 5 comments để hiển thị
+                                const nextVisible = Math.min(
+                                  visibleCount + 5,
+                                  comments.length
+                                );
+                                setVisibleCount(nextVisible);
                               }}
-                              disabled={isLoadingComments}
-                              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-2 rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-all font-medium flex items-center space-x-2 mx-auto cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-6 py-2 rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-all font-medium flex items-center space-x-2 mx-auto cursor-pointer"
                             >
                               <span>
-                                {isLoadingComments
-                                  ? "Đang tải..."
-                                  : `Xem thêm (${Math.max(
-                                      0,
-                                      visibleCount < totalComments
-                                        ? totalComments - visibleCount
-                                        : 0
-                                    )} câu hỏi còn lại)`}
+                                {`Xem thêm (${Math.max(
+                                  0,
+                                  comments.length - visibleCount
+                                )} câu hỏi còn lại)`}
                               </span>
                             </button>
                           </div>

@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toast, useToast } from "../components/Toast";
 import useAuthStore from "../store/authStore";
-import { cvService } from "../services/cvService";
 import { FaEye, FaEyeSlash, FaUserTie, FaBriefcase } from "react-icons/fa";
 
 function RegisterPage() {
@@ -110,25 +109,8 @@ function RegisterPage() {
         // Force check state
         const currentState = useAuthStore.getState();
 
-        // Verify authentication was set
+        // Verify authentication was set and redirect to home
         if (currentState.isAuthenticated) {
-          // Check if user has CVs (only for jobseeker role)
-          if (formData.role === "jobseeker") {
-            try {
-              const cvsResponse = await cvService.getCVs();
-              const cvsData =
-                cvsResponse.data.data?.cvs || cvsResponse.data.cvs || [];
-              if (cvsData.length === 0) {
-                // No CVs, redirect to manage CV page
-                navigate("/manage-cv", { replace: true });
-                return;
-              }
-            } catch (error) {
-              // If error checking CVs, still redirect to home
-              console.error("Error checking CVs:", error);
-            }
-          }
-          // Has CVs or not jobseeker, redirect to home
           navigate("/", { replace: true });
         } else {
           showToast(

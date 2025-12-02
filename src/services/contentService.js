@@ -6,8 +6,7 @@ export const contentService = {
   getCharities: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.region) params.append('region', filters.region);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    // Không truyền page và limit để lấy tất cả data
     return await api.get(`/charities?${params.toString()}`);
   },
 
@@ -19,8 +18,7 @@ export const contentService = {
   getScholarships: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.region) params.append('region', filters.region);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    // Không truyền page và limit để lấy tất cả data
     return await api.get(`/scholarships?${params.toString()}`);
   },
 
@@ -31,9 +29,9 @@ export const contentService = {
   // Healthcare
   getHealthCares: async (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.region) params.append('region', filters.region);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    // Tạm thời bỏ region filter để debug - lấy tất cả data
+    // if (filters.region) params.append('region', filters.region);
+    // Không truyền page và limit để lấy tất cả data
     return await api.get(`/healthcare?${params.toString()}`);
   },
 
@@ -44,11 +42,11 @@ export const contentService = {
   // Career Guidance
   getCareerGuidances: async (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.category) params.append('category', filters.category);
-    if (filters.region) params.append('region', filters.region);
-    if (filters.location) params.append('location', filters.location);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    // Tạm thời bỏ filters để debug - lấy tất cả data
+    // if (filters.category) params.append('category', filters.category);
+    // if (filters.region) params.append('region', filters.region);
+    // if (filters.location) params.append('location', filters.location);
+    // Không truyền page và limit để lấy tất cả data
     return await api.get(`/career-guidance?${params.toString()}`);
   },
 

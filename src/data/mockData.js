@@ -1121,17 +1121,18 @@ export const scholarships = [
 
 // Charity programs - Tổ chức từ thiện
 export const charityPrograms = [
+  // MIỀN BẮC
   {
     id: 1,
     title: "Quỹ Vì trẻ em khuyết tật Việt Nam",
     organization: "Quỹ Vì trẻ em khuyết tật Việt Nam",
     description:
-      "Quỹ Vì trẻ em khuyết tật Việt Nam, một tổ chức phi lợi nhuận hoạt động trong lĩnh vực nhân đạo và từ thiện, được chính thức thành lập từ năm 2010 theo quyết định của Bộ Nội Vụ. Với sứ mệnh cải thiện chất lượng cuộc sống cho trẻ khuyết tật, trẻ mồ côi và các em nhỏ có hoàn cảnh khó khăn, Quỹ đã không ngừng nỗ lực mang lại hy vọng và niềm tin cho các em qua những chương trình thiết thực và lâu dài.",
+      "Cải thiện chất lượng cuộc sống cho trẻ khuyết tật, trẻ mồ côi và các em nhỏ có hoàn cảnh khó khăn, Quỹ đã không ngừng nỗ lực mang lại hy vọng và niềm tin cho các em qua những chương trình thiết thực và lâu dài.",
     location: "Miền Bắc",
     contact: "+84 865 019 639",
     email: "contact@vitreemkhuyettat.org",
     website: "vitreemkhuyettat.org",
-    facebook: "https://www.facebook.com/vitreemkhuyettatvietnam/",
+    facebook: "https://www.facebook.com/vitreemkhuyettatvietnam/#",
     address:
       "Tầng 11 Tòa Mipec Office, số 229 Tây Sơn, phường Ngã Tư Sở, Quận Đống Đa, Hà Nội",
     bankAccount: "0312 - Ngân hàng TMCP Quân đội (MBBank)",
@@ -1147,7 +1148,7 @@ export const charityPrograms = [
     contact: "+84 24 6675 3946 hoặc +84 24 6291 0814",
     email: "admin@acdc.org.vn",
     website: "https://accdc.vn",
-    facebook: "https://www.facebook.com/acdcvn/",
+    facebook: "https://www.facebook.com/acdcvn/?ref=embed_page#",
     address:
       "Tầng 2, tòa B, chung cư Bộ Công An, cuối ngõ 282 Nguyễn Huy Tưởng, Thanh Xuân, Hà Nội",
     image: "https://picsum.photos/800/600?random=21",
@@ -1176,7 +1177,7 @@ export const charityPrograms = [
     contact: "+84 70 508 1088",
     email: "info@volunteerforeducation.org",
     website: "https://www.veo.com.vn/",
-    facebook: "https://www.facebook.com/veovolunteer/",
+    facebook: "https://www.facebook.com/veovolunteer/?locale=vi_VN",
     address: "Tầng 3, Tòa nhà D12 Giảng Võ, Ba Đình, Hà Nội",
     image: "https://picsum.photos/800/600?random=23",
   },
@@ -1184,12 +1185,11 @@ export const charityPrograms = [
     id: 5,
     title: "Hội Cứu trợ trẻ em tàn tật Việt Nam",
     organization: "Hội Cứu trợ trẻ em tàn tật Việt Nam",
-    description:
-      "Hội Cứu trợ trẻ em tàn tật Việt Nam hoạt động nhằm hỗ trợ và giúp đỡ trẻ em tàn tật có hoàn cảnh khó khăn, tạo cơ hội cho các em được tiếp cận với giáo dục, y tế và các dịch vụ xã hội cần thiết.",
+    description: "Hội Cứu trợ trẻ em tàn tật Việt Nam",
     location: "Miền Bắc",
     contact: "+84 24 3853 2785",
     email: "cuutrotretantat@gmail.com",
-    website: "https://cuutrotreemtantat.com.vn/",
+    website: "https://cuutrotreemtantat.com.vn/hoi-cuu-tro-tu-thien-khac/",
     address: "Số 42, Ngô Thì Nhậm, Phường Hai Bà Trưng, Hà Nội",
     bankAccount:
       "Tên tài khoản: Hội Cứu trợ trẻ em tàn tật Việt Nam | Số tài khoản: 0021 0000 19233 | Ngân hàng: Vietcombank",
@@ -1200,10 +1200,10 @@ export const charityPrograms = [
     title: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
     organization: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
     description:
-      "Hội được thành lập nhằm huy động mọi tiềm năng của xã hội, của các nhà hảo tâm trong nước và nước ngoài, tạo mọi điều kiện giúp đỡ để những nạn nhân chất độc da cam và gia đình hòa nhập cộng đồng, xã hội góp phần vào sự nghiệp xây dựng và bảo vệ Tổ quốc Việt Nam Xã hội Chủ nghĩa. Ngoài trụ sở văn phòng đặt tại Yên Hòa (Hà Nội), hiện đang hoạt động tại tất cả các tỉnh, thành phố trên cả nước.",
-    location: "Toàn quốc",
+      "Hội được thành lập nhằm huy động mọi tiềm năng của xã hội, của các nhà hảo tâm trong nước và nước ngoài, tạo mọi điều kiện giúp đỡ để những nạn nhân chất độc da cam và gia đình hòa nhập cộng đồng, xã hội góp phần vào sự nghiệp xây dựng và bảo vệ Tổ quốc Việt Nam Xã hội Chủ nghĩa.",
+    location: "Miền Bắc",
     contact:
-      "Văn phòng: +84 246 265 2642 | Quỹ: +84 246 672 5588 | Tạp chí: +84 246 265 2654",
+      "Điện thoại Văn phòng: +84 246 265 2642 | Quỹ: +84 246 672 5588 | Tạp chí Da cam Việt Nam: +84 246 265 2654",
     email: "vava.org.vn@gmail.com",
     website: "vava.org.vn",
     address: "Số 35 đường Hồ Mễ Trì, phường Yên Hòa, Hà Nội",
@@ -1213,9 +1213,11 @@ export const charityPrograms = [
       "Thông tin chi tiết các tỉnh thành: https://vava.org.vn/thong-tin-cac-tinh-thanh-hoi-tren-ca-nuoc",
     image: "https://picsum.photos/800/600?random=25",
   },
+
+  // MIỀN TRUNG
   {
     id: 7,
-    title: "Viện Nghiên cứu phát triển cộng đồng (ACDC) - Miền Trung",
+    title: "Viện Nghiên cứu phát triển cộng đồng (ACDC)",
     organization: "Viện Nghiên cứu phát triển cộng đồng (ACDC)",
     description:
       "Tổ chức đặt mục tiêu thúc đẩy thay đổi nhận thức xã hội về khuyết tật, góp phần hoàn thiện luật và chính sách cho người khuyết tật và các nhóm yếu thế. Chúng tôi tập trung mở rộng các dịch vụ hỗ trợ, xây dựng và duy trì mạng lưới người khuyết tật để đưa tiếng nói của họ vươn xa. Đồng thời, ACDC không ngừng nâng cao năng lực nội tại để bảo đảm hiệu quả và bền vững trong mọi hoạt động.",
@@ -1224,14 +1226,34 @@ export const charityPrograms = [
       "Huế: +84 234 381 0217 hoặc +84 234 626 5454 | Quảng Trị: +84 233 3520 001 hoặc +84 233 3504 898 | Đà Nẵng: +84 235 6534 357",
     email: "admin@acdc.org.vn",
     website: "https://accdc.vn",
-    facebook: "https://www.facebook.com/acdcvn/",
+    facebook: "https://www.facebook.com/acdcvn/?ref=embed_page#",
     address:
       "Huế: Tầng 1, Shophouse A32, đường số 2, KĐT The Manor Crown, 62 Tố Hữu, phường Vỹ Dạ, Thành phố Huế | Quảng Trị: Khu Trung tâm phục vụ Đối ngoại, số 18 Nguyễn Cơ Thạch, phường Nam Đông Hà, tỉnh Quảng Trị | Đà Nẵng: Số 48 - 50 Nguyễn Phước Lan, phường Hoà Xuân, Thành phố Đà Nẵng",
     image: "https://picsum.photos/800/600?random=26",
   },
   {
     id: 8,
-    title: "Quỹ Vì trẻ em khuyết tật Việt Nam - Miền Nam",
+    title: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
+    organization: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
+    description:
+      "Hội được thành lập nhằm huy động mọi tiềm năng của xã hội, của các nhà hảo tâm trong nước và nước ngoài, tạo mọi điều kiện giúp đỡ để những nạn nhân chất độc da cam và gia đình hòa nhập cộng đồng, xã hội góp phần vào sự nghiệp xây dựng và bảo vệ Tổ quốc Việt Nam Xã hội Chủ nghĩa.",
+    location: "Miền Trung",
+    contact:
+      "Điện thoại Văn phòng: +84 246 265 2642 | Quỹ: +84 246 672 5588 | Tạp chí Da cam Việt Nam: +84 246 265 2654",
+    email: "vava.org.vn@gmail.com",
+    website: "vava.org.vn",
+    address: "Số 35 đường Hồ Mễ Trì, phường Yên Hòa, Hà Nội",
+    bankAccount:
+      "Tên tài khoản: QUY NAN NHAN CHAT DOC DA CAM/DIOXIN VN | Số tài khoản: 0011000863681 | Ngân hàng: Vietcombank",
+    moreInfo:
+      "Thông tin chi tiết các tỉnh thành: https://vava.org.vn/thong-tin-cac-tinh-thanh-hoi-tren-ca-nuoc",
+    image: "https://picsum.photos/800/600?random=27",
+  },
+
+  // MIỀN NAM
+  {
+    id: 9,
+    title: "Quỹ Vì trẻ em khuyết tật Việt Nam",
     organization: "Quỹ Vì trẻ em khuyết tật Việt Nam",
     description:
       "Quỹ Vì trẻ em khuyết tật Việt Nam, một tổ chức phi lợi nhuận hoạt động trong lĩnh vực nhân đạo và từ thiện, được chính thức thành lập từ năm 2010 theo quyết định của Bộ Nội Vụ. Với sứ mệnh cải thiện chất lượng cuộc sống cho trẻ khuyết tật, trẻ mồ côi và các em nhỏ có hoàn cảnh khó khăn, Quỹ đã không ngừng nỗ lực mang lại hy vọng và niềm tin cho các em qua những chương trình thiết thực và lâu dài.",
@@ -1239,15 +1261,15 @@ export const charityPrograms = [
     contact: "+84 865 019 639",
     email: "contact@vitreemkhuyettat.org",
     website: "vitreemkhuyettat.org",
-    facebook: "https://www.facebook.com/vitreemkhuyettatvietnam/",
+    facebook: "https://www.facebook.com/vitreemkhuyettatvietnam/#",
     address:
       "Số 184 Nam Kỳ Khởi Nghĩa, phường Võ Thị Sáu, Quận 3, Thành phố Hồ Chí Minh",
     bankAccount: "0312 - Ngân hàng TMCP Quân đội (MBBank)",
-    image: "https://picsum.photos/800/600?random=27",
+    image: "https://picsum.photos/800/600?random=28",
   },
   {
-    id: 9,
-    title: "Hội Chữ thập đỏ Việt Nam - Miền Nam",
+    id: 10,
+    title: "Hội Chữ thập đỏ Việt Nam",
     organization: "Hội Chữ thập đỏ Việt Nam",
     description:
       "Hội Chữ thập đỏ Việt Nam là tổ chức xã hội nhân đạo của quần chúng với mục đích cao cả là nhân đạo, hòa bình, hữu nghị, góp phần thực hiện mục tiêu dân giàu, nước mạnh, dân chủ, công bằng, văn minh. Hội chăm lo hỗ trợ về vật chất và tinh thần cho những người khó khăn, nạn nhân chiến tranh, nạn nhân thiên tai, thảm họa; tham gia chăm sóc sức khỏe ban đầu cho nhân dân; vận động các tổ chức, cá nhân tham gia các hoạt động nhân đạo do Hội tổ chức.",
@@ -1257,26 +1279,43 @@ export const charityPrograms = [
     website: "https://redcross.org.vn/",
     facebook: "https://www.facebook.com/redcross.org.vn/",
     address: "201 Nguyễn Thị Minh Khai, Quận 1, TP. Hồ Chí Minh",
-    image: "https://picsum.photos/800/600?random=28",
+    image: "https://picsum.photos/800/600?random=29",
   },
   {
-    id: 10,
+    id: 11,
     title: "Hội từ thiện trẻ em Sài Gòn",
-    organization: "Hội từ thiện trẻ em Sài Gòn (Saigon Children's Charity)",
+    organization: "Hội từ thiện trẻ em Sài Gòn",
     description:
-      "Giúp trẻ em Việt Nam có hoàn cảnh khó khăn được tiếp cận giáo dục và có sự khởi đầu tốt hơn trong cuộc sống. saigonchildren chỉ hoạt động tại Việt Nam và mọi hoạt động của tổ chức gắn liền với cam kết hỗ trợ trẻ em vượt qua những rào cản về kinh tế, địa lý, kiến thức và những khiếm khuyết để đến trường. Ngoài trụ sở văn phòng đặt tại TP. Hồ Chí Minh, saigonchildren hiện đang hoạt động tại: An Giang, TP. Cần Thơ, Đồng Nai, Đồng Tháp, Quảng Trị, Tây Ninh.",
+      "Giúp trẻ em Việt Nam có hoàn cảnh khó khăn được tiếp cận giáo dục và có sự khởi đầu tốt hơn trong cuộc sống. saigonchildren chỉ hoạt động tại Việt Nam và mọi hoạt động của tổ chức gắn liền với cam kết hỗ trợ trẻ em vượt qua những rào cản về kinh tế, địa lý, kiến thức và những khiếm khuyết để đến trường.",
     location: "Miền Nam",
     contact: "+84 28 3930 3502",
-    email: "",
+    fax: "+84 28 3930 3503",
     website: "https://www.saigonchildren.com/vi/",
     facebook: "https://www.facebook.com/Saigonchildren/",
     address: "59 Trần Quốc Thảo, phường Xuân Hòa, Thành phố Hồ Chí Minh",
-    fax: "+84 28 3930 3503",
     bankAccount:
-      "Tên tài khoản: Saigon Children's Charity CIO | Số tài khoản: 601704060507595 | Ngân hàng: VIB Bank | Địa chỉ ngân hàng: Tòa nhà Viettel, 285 Cách Mạng Tháng 08, Phường Hòa Hưng, TP.HCM",
+      "Tên tài khoản: Saigon Children’s Charity CIO | Số tài khoản: 601704060507595 | Ngân hàng: VIB Bank | Địa chỉ ngân hàng: Tòa nhà Viettel, 285 Cách Mạng Tháng 08, Phường Hòa Hưng, TP.HCM",
     moreInfo:
       "Hoạt động tại: An Giang, TP. Cần Thơ, Đồng Nai, Đồng Tháp, Quảng Trị, Tây Ninh",
-    image: "https://picsum.photos/800/600?random=29",
+    image: "https://picsum.photos/800/600?random=30",
+  },
+  {
+    id: 12,
+    title: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
+    organization: "Hội Nạn nhân chất độc da cam/dioxin Việt Nam",
+    description:
+      "Hội được thành lập nhằm huy động mọi tiềm năng của xã hội, của các nhà hảo tâm trong nước và nước ngoài, tạo mọi điều kiện giúp đỡ để những nạn nhân chất độc da cam và gia đình hòa nhập cộng đồng, xã hội góp phần vào sự nghiệp xây dựng và bảo vệ Tổ quốc Việt Nam Xã hội Chủ nghĩa.",
+    location: "Miền Nam",
+    contact:
+      "Điện thoại Văn phòng: +84 246 265 2642 | Quỹ: +84 246 672 5588 | Tạp chí Da cam Việt Nam: +84 246 265 2654",
+    email: "vava.org.vn@gmail.com",
+    website: "vava.org.vn",
+    address: "Số 35 đường Hồ Mễ Trì, phường Yên Hòa, Hà Nội",
+    bankAccount:
+      "Tên tài khoản: QUY NAN NHAN CHAT DOC DA CAM/DIOXIN VN | Số tài khoản: 0011000863681 | Ngân hàng: Vietcombank",
+    moreInfo:
+      "Thông tin chi tiết các tỉnh thành: https://vava.org.vn/thong-tin-cac-tinh-thanh-hoi-tren-ca-nuoc",
+    image: "https://picsum.photos/800/600?random=31",
   },
 ];
 

@@ -37,6 +37,9 @@ function AppRouter() {
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
+    // Clear preferences completed flag để modal luôn hiện
+    localStorage.removeItem("preferences-completed");
+
     // Kiểm tra xem đã có token hoặc đã đăng nhập chưa
     const token = localStorage.getItem("token");
     const persistedAuth = localStorage.getItem("soul-talk-auth");
@@ -52,15 +55,7 @@ function AppRouter() {
       return;
     }
 
-    // Kiểm tra xem đã từng hoàn thành preferences chưa
-    const preferencesCompleted = localStorage.getItem("preferences-completed");
-    if (preferencesCompleted === "true") {
-      setShowPreferencesModal(false);
-      setHasCheckedAuth(true);
-      return;
-    }
-
-    // Chỉ hiển thị modal cho guest (chưa đăng nhập và chưa hoàn thành preferences)
+    // Luôn hiển thị modal cho guest (chưa đăng nhập)
     setHasCheckedAuth(true);
     let timeoutId;
     timeoutId = setTimeout(() => {
@@ -83,8 +78,8 @@ function AppRouter() {
     ) {
       // Lưu preferences vào global store cho cả guest và user đăng nhập
       setUserPreferences(prefs);
-      // Đánh dấu đã hoàn thành preferences
-      localStorage.setItem("preferences-completed", "true");
+      // Không lưu trạng thái đã hoàn thành để modal có thể hiện lại
+      // localStorage.setItem("preferences-completed", "true");
     }
     setShowPreferencesModal(false);
   };
@@ -97,7 +92,8 @@ function AppRouter() {
           onComplete={handleGlobalPreferencesComplete}
           onClose={() => {
             setShowPreferencesModal(false);
-            localStorage.setItem("preferences-completed", "true");
+            // Không lưu trạng thái để modal có thể hiện lại
+            // localStorage.setItem("preferences-completed", "true");
           }}
         />
       )}

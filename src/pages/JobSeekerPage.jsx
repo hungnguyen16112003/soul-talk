@@ -38,6 +38,7 @@ function JobSeekerPage() {
 
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(10); // Hiển thị 10 công việc đầu tiên
 
   // Hàm phân loại ngành nghề
   const getJobCategory = (job) => {
@@ -152,7 +153,7 @@ function JobSeekerPage() {
 
       try {
         setIsLoading(true);
-        const response = await jobService.getJobs({ status: "active" });
+        const response = await jobService.getJobs({ status: "active" }); // Lấy jobs active
         // Backend trả về: { success: true, data: { jobs: [...], pagination: {...} } }
         const jobsData =
           response.data.data?.jobs ||
@@ -425,11 +426,38 @@ function JobSeekerPage() {
             </p>
           </div>
         ) : filteredJobs.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredJobs.slice(0, visibleCount).map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+
+            {/* Nút Xem thêm */}
+            {filteredJobs.length > 10 &&
+              visibleCount < filteredJobs.length && (
+                <div className="text-center pt-8">
+                  <button
+                    onClick={() => {
+                      // Tăng thêm 10 công việc để hiển thị
+                      const nextVisible = Math.min(
+                        visibleCount + 10,
+                        filteredJobs.length
+                      );
+                      setVisibleCount(nextVisible);
+                    }}
+                    className="animate-gradient-slide text-[#7a5a15] px-6 py-3 rounded-lg hover:shadow-lg transition-all font-medium flex items-center space-x-2 mx-auto"
+                  >
+                    <span>
+                      Xem thêm ({Math.max(
+                        0,
+                        filteredJobs.length - visibleCount
+                      )} công việc còn lại)
+                    </span>
+                  </button>
+                </div>
+              )}
+          </>
         ) : (
           <div className="bg-white rounded-xl p-12 text-center shadow-md">
             <p className="text-gray-600 text-lg mb-4">
