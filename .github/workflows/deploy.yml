@@ -1,0 +1,57 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📝 Checkout source code
+        uses: actions/checkout@v4
+
+      # ===========================
+      # SSH SETUP
+      # ===========================
+      - name: 🔑 Install SSH key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: 🗝 Add VPS to known_hosts
+        run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # ===========================
+      # DEPLOY SCRIPT
+      # ===========================
+      - name: 🚀 Deploy to VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+
+            echo "====== BACKEND DEPLOY ======"
+            cd /var/www/equalhire_be
+            git reset --hard HEAD
+            git pull origin main
+            npm install --omit=dev
+            pm2 restart equalhire_be || pm2 start server.js --name equalhire_be
+
+
+            echo "====== FRONTEND DEPLOY ======"
+            cd /var/www/soul-talk
+            git reset --hard HEAD
+            git pull origin main
+
+            # Giữ lại file .env của VPS
+            echo "Giữ lại .env hiện tại của VPS"
+            touch /var/www/soul-talk/.env
+
+            npm install
+            npm run build
+
+            pm2 restart soul_talk_fe || pm2 start "serve -s dist -l 3000" --name soul_talk_fe
+
+            echo "====== DEPLOY DONE SUCCESSFULLY ======"
+
+          EOF
