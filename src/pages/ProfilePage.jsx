@@ -6,12 +6,32 @@ import { Toast, useToast } from "../components/Toast";
 import { userService } from "../services/userService";
 import { FaCamera, FaTimes } from "react-icons/fa";
 
+// Hàm build avatar URL
+const buildAvatarUrl = (avatar) => {
+  if (!avatar) return "";
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // Nếu avatar đã là URL đầy đủ
+  if (avatar.startsWith("http")) {
+    return avatar;
+  }
+
+  // Nếu avatar bắt đầu bằng / (như /uploads/filename.jpg)
+  if (avatar.startsWith("/")) {
+    return `${API_URL}${avatar}`;
+  }
+
+  // Mặc định prepend /uploads/
+  return `${API_URL}/uploads/${avatar}`;
+};
+
 function ProfilePage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const updateUser = useAuthStore((state) => state.updateUser);
-  const loadUser = useAuthStore((state) => state.loadUser);
+
   const logout = useAuthStore((state) => state.logout);
   const { toast, showToast, hideToast } = useToast();
   const fileInputRef = useRef(null);
@@ -71,17 +91,7 @@ function ProfilePage() {
         companyWebsite: user.companyWebsite || "",
       });
       if (user.avatar) {
-        // Build avatar URL
-        let avatarUrl;
-        if (user.avatar.startsWith("http")) {
-          avatarUrl = user.avatar;
-        } else if (user.avatar.startsWith("/")) {
-          avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`;
-        } else {
-          // If avatar is just filename, prepend /uploads/
-          avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`;
-        }
-        setAvatarPreview(avatarUrl);
+        setAvatarPreview(buildAvatarUrl(user.avatar));
       } else {
         setAvatarPreview(null);
       }
@@ -112,22 +122,28 @@ function ProfilePage() {
 
       // Add role-specific fields
       if (user?.role === "jobseeker") {
-        if (formData.disabilityType) profileData.disabilityType = formData.disabilityType;
-        if (formData.severityLevel) profileData.severityLevel = formData.severityLevel;
+        if (formData.disabilityType)
+          profileData.disabilityType = formData.disabilityType;
+        if (formData.severityLevel)
+          profileData.severityLevel = formData.severityLevel;
         if (formData.region) profileData.region = formData.region;
       } else if (user?.role === "employer") {
-        if (formData.companyName) profileData.companyName = formData.companyName;
-        if (formData.companyAddress) profileData.companyAddress = formData.companyAddress;
-        if (formData.companyWebsite) profileData.companyWebsite = formData.companyWebsite;
+        if (formData.companyName)
+          profileData.companyName = formData.companyName;
+        if (formData.companyAddress)
+          profileData.companyAddress = formData.companyAddress;
+        if (formData.companyWebsite)
+          profileData.companyWebsite = formData.companyWebsite;
       }
 
       // Call API to update profile
       const response = await userService.updateProfile(profileData, avatarFile);
-      
+
       // API interceptor returns response.data directly, so response is already the data
       if (response.success) {
-        const updatedUserData = response.data?.user || response.data || response.user;
-        
+        const updatedUserData =
+          response.data?.user || response.data || response.user;
+
         // Update user in store (keep original avatar path from backend)
         updateUser({
           name: updatedUserData.name,
@@ -144,19 +160,10 @@ function ProfilePage() {
 
         // Reset avatar file
         setAvatarFile(null);
-        
+
         // Update avatar preview if new avatar URL
         if (updatedUserData.avatar) {
-          let avatarUrl;
-          if (updatedUserData.avatar.startsWith("http")) {
-            avatarUrl = updatedUserData.avatar;
-          } else if (updatedUserData.avatar.startsWith("/")) {
-            avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${updatedUserData.avatar}`;
-          } else {
-            // If avatar is just filename, prepend /uploads/
-            avatarUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${updatedUserData.avatar}`;
-          }
-          setAvatarPreview(avatarUrl);
+          setAvatarPreview(buildAvatarUrl(updatedUserData.avatar));
         } else {
           setAvatarPreview(null);
         }
@@ -164,7 +171,10 @@ function ProfilePage() {
         setIsEditing(false);
         showToast("Cập nhật thông tin thành công!", "success");
       } else {
-        showToast(response.error || response.message || "Cập nhật thông tin thất bại!", "error");
+        showToast(
+          response.error || response.message || "Cập nhật thông tin thất bại!",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -174,7 +184,11 @@ function ProfilePage() {
         response: error.response,
         data: error.data,
       });
-      const errorMsg = error.error || error.message || error.data?.error || "Có lỗi xảy ra khi cập nhật thông tin!";
+      const errorMsg =
+        error.error ||
+        error.message ||
+        error.data?.error ||
+        "Có lỗi xảy ra khi cập nhật thông tin!";
       showToast(errorMsg, "error");
     } finally {
       setIsSaving(false);
@@ -222,9 +236,8 @@ function ProfilePage() {
       // Call API to remove avatar
       const profileData = { avatar: null };
       const response = await userService.updateProfile(profileData, null);
-      
+
       if (response.success) {
-        const updatedUserData = response.data?.user || response.data || response.user;
         // Clear avatar preview and file
         setAvatarPreview(null);
         setAvatarFile(null);
@@ -236,7 +249,8 @@ function ProfilePage() {
       }
     } catch (error) {
       console.error("Error removing avatar:", error);
-      const errorMsg = error.error || error.message || "Có lỗi xảy ra khi xóa ảnh đại diện!";
+      const errorMsg =
+        error.error || error.message || "Có lỗi xảy ra khi xóa ảnh đại diện!";
       showToast(errorMsg, "error");
     }
   };
@@ -256,7 +270,11 @@ function ProfilePage() {
     e.preventDefault();
 
     // Validation
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
       showToast("Vui lòng nhập đầy đủ thông tin!", "warning");
       return;
     }
@@ -279,7 +297,10 @@ function ProfilePage() {
         confirmPassword: passwordData.confirmPassword,
       });
 
-      showToast("Mật khẩu đã được thay đổi thành công! Bạn sẽ được đăng xuất để đăng nhập lại với mật khẩu mới.", "success");
+      showToast(
+        "Mật khẩu đã được thay đổi thành công! Bạn sẽ được đăng xuất để đăng nhập lại với mật khẩu mới.",
+        "success"
+      );
 
       // Reset form
       setPasswordData({
@@ -296,7 +317,8 @@ function ProfilePage() {
       }, 2000);
     } catch (error) {
       console.error("Error changing password:", error);
-      const errorMessage = error.response?.data?.error || "Có lỗi xảy ra khi đổi mật khẩu!";
+      const errorMessage =
+        error.response?.data?.error || "Có lỗi xảy ra khi đổi mật khẩu!";
       showToast(errorMessage, "error");
     } finally {
       setIsChangingPassword(false);
@@ -341,25 +363,19 @@ function ProfilePage() {
               {avatarPreview || user?.avatar ? (
                 <>
                   <img
-                    src={avatarPreview || (() => {
-                      if (!user?.avatar) return '';
-                      if (user.avatar.startsWith("http")) return user.avatar;
-                      if (user.avatar.startsWith("/")) {
-                        return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`;
-                      }
-                      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`;
-                    })()}
+                    src={avatarPreview || buildAvatarUrl(user?.avatar)}
                     alt="Avatar"
                     onClick={handleAvatarView}
                     onError={(e) => {
-                      console.error("Avatar load error - Original:", user?.avatar);
+                      console.error(
+                        "Avatar load error - Original:",
+                        user?.avatar
+                      );
                       console.error("Avatar load error - URL:", e.target.src);
-                      // Show placeholder instead of hiding
-                      e.target.src = '';
-                      e.target.style.display = 'none';
+                      // Don't hide the image on error, just log it
                     }}
                     onLoad={() => {}}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-amber-500 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-amber-500 shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
                   />
                   {isEditing && (
                     <>
@@ -698,7 +714,7 @@ function ProfilePage() {
               onClick={() => setShowPasswordChange(!showPasswordChange)}
               className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium"
             >
-              {showPasswordChange ? 'Hủy' : 'Đổi mật khẩu'}
+              {showPasswordChange ? "Hủy" : "Đổi mật khẩu"}
             </button>
           </div>
 
@@ -712,7 +728,12 @@ function ProfilePage() {
                   <input
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        currentPassword: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                     placeholder="Nhập mật khẩu hiện tại"
                     required
@@ -727,7 +748,12 @@ function ProfilePage() {
                     <input
                       type="password"
                       value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       placeholder="Nhập mật khẩu mới"
                       minLength="6"
@@ -742,7 +768,12 @@ function ProfilePage() {
                     <input
                       type="password"
                       value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       placeholder="Nhập lại mật khẩu mới"
                       minLength="6"
@@ -785,7 +816,6 @@ function ProfilePage() {
             </div>
           )}
         </div>
-
       </div>
 
       {/* Confirmation Dialog for Delete Avatar */}
@@ -802,7 +832,8 @@ function ProfilePage() {
               Xác nhận xóa ảnh đại diện
             </h3>
             <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn xóa ảnh đại diện không? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa ảnh đại diện không? Hành động này không
+              thể hoàn tác.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -830,20 +861,13 @@ function ProfilePage() {
         >
           <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center">
             <img
-              src={
-                avatarPreview ||
-                (user?.avatar?.startsWith("http") 
-                  ? user.avatar
-                  : user?.avatar?.startsWith("/")
-                  ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${user.avatar}`
-                  : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${user.avatar}`)
-              }
+              src={avatarPreview || buildAvatarUrl(user?.avatar)}
               alt="Avatar"
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
               onError={(e) => {
                 console.error("Avatar modal load error:", user?.avatar);
-                e.target.src = '';
+                e.target.src = "";
               }}
             />
             <button
@@ -861,5 +885,3 @@ function ProfilePage() {
 }
 
 export default ProfilePage;
-
-

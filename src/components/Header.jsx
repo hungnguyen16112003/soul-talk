@@ -31,16 +31,19 @@ function Header() {
     if (!avatar) return null;
     if (avatar.startsWith("http")) return avatar;
     if (avatar.startsWith("/")) {
-      return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${avatar}`;
+      return `${
+        import.meta.env.VITE_API_URL || "http://localhost:5000"
+      }${avatar}`;
     }
-    return `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${avatar}`;
+    return `${
+      import.meta.env.VITE_API_URL || "http://localhost:5000"
+    }/uploads/${avatar}`;
   };
 
   // Tính toán isEmployer từ user role - chỉ check role hiện tại, không check roles array
   // Nếu user đang đăng nhập với role "jobseeker" thì không hiển thị UI employer
   const isEmployer = user?.role === "employer";
-  const isJobSeeker = user?.role === "jobseeker";
-  const isAdmin = user?.roles?.includes("admin");
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -104,7 +107,6 @@ function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [moreMenuOpen]);
-
 
   // Kiểm tra route active
   const isActive = useCallback(
@@ -446,136 +448,142 @@ function Header() {
                   <>
                     {/* Notification Bell */}
                     <NotificationDropdown />
-                    
+
                     <div className="relative" ref={userMenuRef}>
                       {/* User Avatar Button */}
                       <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
                         className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-amber-50 transition-colors cursor-pointer"
                       >
-                      {user?.avatar ? (
-                        <img
-                          src={getAvatarUrl(user.avatar)}
-                          alt="Avatar"
-                          onError={(e) => {
-                            console.error("Header avatar load error:", user?.avatar);
-                            e.target.style.display = 'none';
-                          }}
-                          className="w-8 h-8 rounded-full object-cover border-2 border-amber-600"
+                        {user?.avatar ? (
+                          <img
+                            src={getAvatarUrl(user.avatar)}
+                            alt="Avatar"
+                            onError={(e) => {
+                              console.error(
+                                "Header avatar load error:",
+                                user?.avatar
+                              );
+                              e.target.style.display = "none";
+                            }}
+                            className="w-8 h-8 rounded-full object-cover border-1 border-amber-600"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {user?.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                        )}
+                        <span className="text-sm font-semibold text-gray-700 hidden sm:block">
+                          {user?.name?.split(" ").pop() || "User"}
+                        </span>
+                        <FaChevronDown
+                          className={`w-3 h-3 text-gray-600 transition-transform ${
+                            userMenuOpen ? "transform rotate-180" : ""
+                          }`}
                         />
-                      ) : (
-                        <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                          {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {userMenuOpen && (
+                        <div className="absolute right-0 top-20 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                          <div className="px-4 py-3 border-b border-gray-200">
+                            <div className="flex items-center gap-3 mb-2">
+                              {user?.avatar ? (
+                                <img
+                                  src={getAvatarUrl(user.avatar)}
+                                  alt="Avatar"
+                                  onError={(e) => {
+                                    console.error(
+                                      "Header dropdown avatar load error:",
+                                      user?.avatar
+                                    );
+                                    e.target.style.display = "none";
+                                  }}
+                                  className="w-10 h-10 rounded-full object-cover border-1 border-amber-600"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                  {user?.name?.charAt(0).toUpperCase() || "U"}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {user?.name}
+                                </p>
+                                <p className="text-xs text-gray-600 truncate">
+                                  {user?.email}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-amber-700">
+                              {user?.role === "employer"
+                                ? "Nhà tuyển dụng"
+                                : "Người tìm việc"}
+                            </p>
+                          </div>
+                          <Link
+                            to="/profile"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                          >
+                            <FaUser className="w-4 h-4 text-blue-600" />
+                            <span>Thông tin tài khoản</span>
+                          </Link>
+                          {isEmployer ? (
+                            <>
+                              <Link
+                                to="/employer/dashboard"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                              >
+                                <FaChartBar className="w-4 h-4 text-green-600" />
+                                <span>Dashboard</span>
+                              </Link>
+                              <Link
+                                to="/employer/applications"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                              >
+                                <FaFileAlt className="w-4 h-4 text-indigo-600" />
+                                <span>Đơn ứng tuyển</span>
+                              </Link>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                to="/manage-cv"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                              >
+                                <FaFilePdf className="w-4 h-4 text-red-600" />
+                                <span>Quản lý CV</span>
+                              </Link>
+                              <Link
+                                to="/my-applications"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                              >
+                                <FaFileAlt className="w-4 h-4 text-indigo-600" />
+                                <span>Đơn đã ứng tuyển</span>
+                              </Link>
+                            </>
+                          )}
+                          <div className="border-t border-gray-200 mt-2 pt-2">
+                            <button
+                              onClick={() => {
+                                logout();
+                                setUserMenuOpen(false);
+                                window.location.href = "/";
+                              }}
+                              className="w-full flex items-center gap-2 text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
+                            >
+                              <FaSignOutAlt className="w-4 h-4" />
+                              <span>Đăng xuất</span>
+                            </button>
+                          </div>
                         </div>
                       )}
-                      <span className="text-sm font-semibold text-gray-700 hidden sm:block">
-                        {user?.name?.split(" ").pop() || "User"}
-                      </span>
-                      <FaChevronDown
-                        className={`w-3 h-3 text-gray-600 transition-transform ${
-                          userMenuOpen ? "transform rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    {userMenuOpen && (
-                      <div className="absolute right-0 top-20 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                        <div className="px-4 py-3 border-b border-gray-200">
-                          <div className="flex items-center gap-3 mb-2">
-                            {user?.avatar ? (
-                              <img
-                                src={getAvatarUrl(user.avatar)}
-                                alt="Avatar"
-                                onError={(e) => {
-                                  console.error("Header dropdown avatar load error:", user?.avatar);
-                                  e.target.style.display = 'none';
-                                }}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                {user?.name?.charAt(0).toUpperCase() || "U"}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 truncate">
-                                {user?.name}
-                              </p>
-                              <p className="text-xs text-gray-600 truncate">
-                                {user?.email}
-                              </p>
-                            </div>
-                          </div>
-                          <p className="text-xs text-amber-700">
-                            {user?.role === "employer"
-                              ? "Nhà tuyển dụng"
-                              : "Người tìm việc"}
-                          </p>
-                        </div>
-                        <Link
-                          to="/profile"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                        >
-                          <FaUser className="w-4 h-4 text-blue-600" />
-                          <span>Thông tin tài khoản</span>
-                        </Link>
-                        {isEmployer ? (
-                          <>
-                            <Link
-                              to="/employer/dashboard"
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                            >
-                              <FaChartBar className="w-4 h-4 text-green-600" />
-                              <span>Dashboard</span>
-                            </Link>
-                            <Link
-                              to="/employer/applications"
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                            >
-                              <FaFileAlt className="w-4 h-4 text-indigo-600" />
-                              <span>Đơn ứng tuyển</span>
-                            </Link>
-                          </>
-                        ) : (
-                          <>
-                            <Link
-                              to="/manage-cv"
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                            >
-                              <FaFilePdf className="w-4 h-4 text-red-600" />
-                              <span>Quản lý CV</span>
-                            </Link>
-                            <Link
-                              to="/my-applications"
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                            >
-                              <FaFileAlt className="w-4 h-4 text-indigo-600" />
-                              <span>Đơn đã ứng tuyển</span>
-                            </Link>
-                          </>
-                        )}
-                        <div className="border-t border-gray-200 mt-2 pt-2">
-                          <button
-                            onClick={() => {
-                              logout();
-                              setUserMenuOpen(false);
-                              window.location.href = "/";
-                            }}
-                            className="w-full flex items-center gap-2 text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
-                          >
-                            <FaSignOutAlt className="w-4 h-4" />
-                            <span>Đăng xuất</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -755,10 +763,13 @@ function Header() {
                             src={getAvatarUrl(user.avatar)}
                             alt="Avatar"
                             onError={(e) => {
-                              console.error("Mobile header avatar load error:", user?.avatar);
-                              e.target.style.display = 'none';
+                              console.error(
+                                "Mobile header avatar load error:",
+                                user?.avatar
+                              );
+                              e.target.style.display = "none";
                             }}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-amber-600"
+                            className="w-10 h-10 rounded-full object-cover border-1 border-amber-600"
                           />
                         ) : (
                           <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-300 rounded-full flex items-center justify-center text-white text-sm font-bold">
