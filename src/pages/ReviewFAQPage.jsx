@@ -33,8 +33,8 @@ function ReviewFAQPage() {
   const [newQuestion, setNewQuestion] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyText, setReplyText] = useState("");
-  const [isLoadingFAQs, setIsLoadingFAQs] = useState(true);
-  const [isLoadingComments, setIsLoadingComments] = useState(true);
+  const [isLoadingFAQs, setIsLoadingFAQs] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
