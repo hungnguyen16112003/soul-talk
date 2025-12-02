@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import useAuthStore from "../store/authStore";
 import NotificationDropdown from "./NotificationDropdown";
+import { buildAvatarUrl } from "../config/api";
 
 function Header() {
   const location = useLocation();
@@ -26,19 +27,8 @@ function Header() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
 
-  // Helper function to build avatar URL
-  const getAvatarUrl = (avatar) => {
-    if (!avatar) return null;
-    if (avatar.startsWith("http")) return avatar;
-    if (avatar.startsWith("/")) {
-      return `${
-        import.meta.env.VITE_API_URL || "http://localhost:5000"
-      }${avatar}`;
-    }
-    return `${
-      import.meta.env.VITE_API_URL || "http://localhost:5000"
-    }/uploads/${avatar}`;
-  };
+  // Use shared avatar URL builder
+  const getAvatarUrl = buildAvatarUrl;
 
   // Tính toán isEmployer từ user role - chỉ check role hiện tại, không check roles array
   // Nếu user đang đăng nhập với role "jobseeker" thì không hiển thị UI employer

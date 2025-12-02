@@ -2,6 +2,8 @@
 import axios from "axios";
 
 // Base URL for API
+// For production, set VITE_API_URL environment variable to your backend URL
+// Example: VITE_API_URL=https://your-backend-domain.com
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api/";
 
@@ -80,5 +82,27 @@ api.interceptors.response.use(
     }
   }
 );
+
+// Helper function to build avatar URL
+export const buildAvatarUrl = (avatar) => {
+  if (!avatar) return null;
+
+  // Nếu avatar đã là URL đầy đủ (Cloudinary URLs)
+  if (avatar.startsWith("http")) {
+    return avatar;
+  }
+
+  // For backward compatibility with local storage (if any)
+  // Use API base URL and remove '/api' suffix to get backend base URL
+  const apiBase = api.defaults.baseURL.replace("/api/", "/");
+
+  // Nếu avatar bắt đầu bằng / (như /uploads/filename.jpg)
+  if (avatar.startsWith("/")) {
+    return `${apiBase}${avatar}`;
+  }
+
+  // Mặc định prepend /uploads/
+  return `${apiBase}/uploads/${avatar}`;
+};
 
 export default api;

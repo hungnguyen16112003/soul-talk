@@ -5,26 +5,9 @@ import useAuthStore from "../store/authStore";
 import { Toast, useToast } from "../components/Toast";
 import { userService } from "../services/userService";
 import { FaCamera, FaTimes } from "react-icons/fa";
+import { buildAvatarUrl } from "../config/api";
 
-// Hàm build avatar URL
-const buildAvatarUrl = (avatar) => {
-  if (!avatar) return "";
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-  // Nếu avatar đã là URL đầy đủ
-  if (avatar.startsWith("http")) {
-    return avatar;
-  }
-
-  // Nếu avatar bắt đầu bằng / (như /uploads/filename.jpg)
-  if (avatar.startsWith("/")) {
-    return `${API_URL}${avatar}`;
-  }
-
-  // Mặc định prepend /uploads/
-  return `${API_URL}/uploads/${avatar}`;
-};
+// buildAvatarUrl is imported from config/api.js
 
 function ProfilePage() {
   const navigate = useNavigate();
