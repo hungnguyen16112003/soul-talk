@@ -94,8 +94,8 @@ function JobSeekerPage() {
     const userSeverityLevel = user?.severityLevel || "";
     const userRegion = user?.region || "";
 
-    // Map disabilityType: nếu là "Khác" thì để trống
-    const mappedDisabilityType = userDisabilityType === "Khác" ? "" : userDisabilityType;
+    // Map disabilityType: nếu là "Khác" hoặc "Khuyết tật khác" thì để trống
+    const mappedDisabilityType = (userDisabilityType === "Khác" || userDisabilityType === "Khuyết tật khác") ? "" : userDisabilityType;
 
     return {
       search: "",
@@ -111,7 +111,7 @@ function JobSeekerPage() {
   useEffect(() => {
     // Ưu tiên lấy từ user data
     if (user && (user.disabilityType || user.severityLevel || user.region)) {
-      const mappedDisabilityType = user.disabilityType === "Khác" ? "" : (user.disabilityType || "");
+      const mappedDisabilityType = (user.disabilityType === "Khác" || user.disabilityType === "Khuyết tật khác") ? "" : (user.disabilityType || "");
       setFilters((prev) => ({
         ...prev,
         disabilityType: mappedDisabilityType,
@@ -126,7 +126,7 @@ function JobSeekerPage() {
         (prefs.disabilityType || prefs.severityLevel || prefs.region)
       ) {
         const mappedDisability =
-          prefs.disabilityType === "Khác" ? "" : prefs.disabilityType;
+          (prefs.disabilityType === "Khác" || prefs.disabilityType === "Khuyết tật khác") ? "" : prefs.disabilityType;
         setFilters((prev) => ({
           ...prev,
           disabilityType: mappedDisability || prev.disabilityType,
@@ -338,10 +338,10 @@ function JobSeekerPage() {
               >
                 <option value="">Tất cả</option>
                 {disabilityTypes
-                  .filter((type) => type.name !== "Khác")
+                  .filter((type) => type.name !== "Khuyết tật khác")
                   .map((type) => (
                     <option key={type.id} value={type.name}>
-                      {type.icon} {type.name}
+                      {type.name}
                     </option>
                   ))}
               </select>

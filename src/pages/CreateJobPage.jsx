@@ -410,15 +410,16 @@ function CreateJobPage() {
                   // Map emoji icons to react-icons
                   const getIcon = (iconName) => {
                     switch (iconName) {
-                      case "Khiếm thính":
+                      case "Khuyết tật nghe, nói":
                         return <FaDeaf className="w-5 h-5 text-blue-500" />;
-                      case "Khiếm thị":
+                      case "Khuyết tật nhìn":
                         return <FaEye className="w-5 h-5 text-purple-500" />;
-                      case "Vận động":
+                      case "Khuyết tật vận động":
                         return <FaWheelchair className="w-5 h-5 text-green-500" />;
-                      case "Trí tuệ":
+                      case "Khuyết tật thần kinh, tâm thần":
+                      case "Khuyết tật trí tuệ":
                         return <FaBrain className="w-5 h-5 text-orange-500" />;
-                      case "Khác":
+                      case "Khuyết tật khác":
                         return <FaHandsHelping className="w-5 h-5 text-amber-500" />;
                       default:
                         return <span>{type.icon}</span>;

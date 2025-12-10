@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import AppRouter from "./router/AppRouter";
 import useAuthStore from "./store/authStore";
+import FloatingSupportButton from "./components/FloatingSupportButton";
 
 function App() {
   const loadUser = useAuthStore((state) => state.loadUser);
@@ -17,9 +18,12 @@ function App() {
   }, [loadUser]);
 
   return (
-    <div className="app-background">
-      <AppRouter />
-    </div>
+    <>
+      <div className="app-background">
+        <AppRouter />
+      </div>
+      <FloatingSupportButton />
+    </>
   );
 }
 

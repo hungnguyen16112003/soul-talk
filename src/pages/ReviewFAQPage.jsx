@@ -40,9 +40,7 @@ function ReviewFAQPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [newCommentIds, setNewCommentIds] = useState(new Set());
   const [newReplyIds, setNewReplyIds] = useState(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalComments, setTotalComments] = useState(0);
+
   const [visibleCount, setVisibleCount] = useState(5);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [isDeletingRating, setIsDeletingRating] = useState(false);
@@ -198,10 +196,6 @@ function ReviewFAQPage() {
         response.data ||
         [];
 
-      const pagination =
-        response.data.data?.pagination || response.data.pagination || {};
-      const total = pagination.total || 0;
-      const skip = (page - 1) * 10;
       // Không cần hasMore vì load tất cả comments một lần
       // Không cần set totalComments vì không dùng cho nút xem thêm
 

@@ -191,7 +191,7 @@ function Header() {
 
   const getActiveClass = (path) => {
     const baseClass =
-      "relative px-4 py-2 rounded-full font-medium z-10 transition-colors duration-200";
+      "relative !flex !items-center px-4 py-2 rounded-full font-medium z-10 transition-colors duration-200";
     const activeClass = isActive(path)
       ? "text-white font-semibold"
       : "text-gray-700 hover:text-amber-700";
@@ -294,16 +294,6 @@ function Header() {
                     Tìm việc
                   </Link>
 
-                  {/* Các mục phụ - chỉ hiển thị trên desktop (lg+) */}
-                  <Link
-                    ref={(el) => (linkRefs.current["/charity"] = el)}
-                    to="/charity"
-                    className={`${getActiveClass("/charity")} hidden lg:block`}
-                  >
-                    <FaHeart className="inline-block w-4 h-4 mr-1.5 text-red-500" />
-                    Hỗ trợ khác
-                  </Link>
-
                   <Link
                     ref={(el) => (linkRefs.current["/scholarships"] = el)}
                     to="/scholarships"
@@ -348,6 +338,15 @@ function Header() {
                     Hỏi đáp
                   </Link>
 
+                  <Link
+                    ref={(el) => (linkRefs.current["/charity"] = el)}
+                    to="/charity"
+                    className={`${getActiveClass("/charity")} hidden lg:block`}
+                  >
+                    <FaHeart className="inline-block w-4 h-4 mr-1.5 text-red-500" />
+                    Hỗ trợ khác
+                  </Link>
+
                   {/* Dropdown "Khác" cho tablet - hiển thị từ md đến lg */}
                   <div
                     className="md:block lg:hidden relative"
@@ -366,7 +365,7 @@ function Header() {
                         }
                       }}
                       onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                      className={`relative px-4 py-2 rounded-full font-medium z-10 transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+                      className={`relative  px-4 py-2 rounded-full font-medium z-10 transition-all duration-200 cursor-pointer flex items-center gap-2 ${
                         isActive("/charity") ||
                         isActive("/scholarships") ||
                         isActive("/healthcare") ||
@@ -387,14 +386,6 @@ function Header() {
                     {/* Dropdown menu */}
                     {moreMenuOpen && (
                       <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                        <Link
-                          to="/charity"
-                          onClick={() => setMoreMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
-                        >
-                          <FaHeart className="w-4 h-4 text-red-500" />
-                          <span>Hỗ trợ khác</span>
-                        </Link>
                         <Link
                           to="/scholarships"
                           onClick={() => setMoreMenuOpen(false)}
@@ -426,6 +417,14 @@ function Header() {
                         >
                           <FaComments className="w-4 h-4 text-cyan-600" />
                           <span>Hỏi đáp</span>
+                        </Link>
+                        <Link
+                          to="/charity"
+                          onClick={() => setMoreMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors duration-200"
+                        >
+                          <FaHeart className="w-4 h-4 text-red-500" />
+                          <span>Hỗ trợ khác</span>
                         </Link>
                       </div>
                     )}
@@ -684,17 +683,6 @@ function Header() {
                     </Link>
 
                     <Link
-                      to="/charity"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`${getMobileActiveClass(
-                        "/charity"
-                      )} text-left flex items-center gap-2`}
-                    >
-                      <FaHeart className="w-4 h-4 text-red-500" />
-                      <span>Hỗ trợ khác</span>
-                    </Link>
-
-                    <Link
                       to="/scholarships"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`${getMobileActiveClass(
@@ -736,6 +724,17 @@ function Header() {
                     >
                       <FaComments className="w-4 h-4 text-cyan-600" />
                       <span>Hỏi đáp</span>
+                    </Link>
+
+                    <Link
+                      to="/charity"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`${getMobileActiveClass(
+                        "/charity"
+                      )} text-left flex items-center gap-2`}
+                    >
+                      <FaHeart className="w-4 h-4 text-red-500" />
+                      <span>Hỗ trợ khác</span>
                     </Link>
                   </>
                 )}

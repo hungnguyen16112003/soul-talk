@@ -187,19 +187,19 @@ function InitialPreferencesModal({ isOpen, onComplete, onClose }) {
                 let IconComponent = null;
                 let iconColor = "text-amber-600";
                 
-                if (type.name === "Khiếm thính") {
+                if (type.name === "Khuyết tật nghe, nói") {
                   IconComponent = FaDeaf;
                   iconColor = "text-blue-600";
-                } else if (type.name === "Khiếm thị") {
+                } else if (type.name === "Khuyết tật nhìn") {
                   IconComponent = FaEye;
                   iconColor = "text-purple-600";
-                } else if (type.name === "Vận động") {
+                } else if (type.name === "Khuyết tật vận động") {
                   IconComponent = FaWheelchair;
                   iconColor = "text-green-600";
-                } else if (type.name === "Trí tuệ") {
+                } else if (type.name === "Khuyết tật trí tuệ" || type.name === "Khuyết tật thần kinh, tâm thần") {
                   IconComponent = FaBrain;
                   iconColor = "text-pink-600";
-                } else if (type.name === "Khác") {
+                } else if (type.name === "Khuyết tật khác") {
                   IconComponent = FaHandsHelping;
                   iconColor = "text-amber-600";
                 }

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
+import { disabilityTypes } from "../data/mockData";
 import { Toast, useToast } from "../components/Toast";
 import { userService } from "../services/userService";
 import { FaCamera, FaTimes } from "react-icons/fa";
@@ -511,11 +512,11 @@ function ProfilePage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
                     >
                       <option value="">Chọn loại khuyết tật</option>
-                      <option value="Vận động">Vận động</option>
-                      <option value="Khiếm thính">Khiếm thính</option>
-                      <option value="Khiếm thị">Khiếm thị</option>
-                      <option value="Trí tuệ">Trí tuệ</option>
-                      <option value="Khác">Khác</option>
+                      {disabilityTypes.map((type) => (
+                        <option key={type.id} value={type.name}>
+                          {type.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
@@ -537,8 +538,8 @@ function ProfilePage() {
                     >
                       <option value="">Chọn mức độ</option>
                       <option value="Nhẹ">Nhẹ</option>
-                      <option value="Trung bình">Trung bình</option>
                       <option value="Nặng">Nặng</option>
+                      <option value="Đặc biệt nặng">Đặc biệt nặng</option>
                     </select>
                   ) : (
                     <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
