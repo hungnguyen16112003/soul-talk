@@ -53,11 +53,12 @@ const FloatingSupportButton = () => {
     >
       {/* Menu Options */}
       <div
-        className={`transition-all duration-300 origin-bottom-right flex flex-col gap-3 mb-2 ${
+        className={`transition-all duration-300 origin-bottom-right flex flex-col gap-3 absolute bottom-16 right-0 ${
           isOpen
-            ? "scale-100 opacity-100 translate-y-0"
-            : "scale-50 opacity-0 translate-y-10 pointer-events-none"
+            ? "scale-100 opacity-100 translate-y-0 pointer-events-auto"
+            : "scale-95 opacity-0 translate-y-4 pointer-events-none h-0 overflow-hidden"
         }`}
+        aria-hidden={!isOpen}
       >
         <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-2 flex flex-col gap-2 min-w-[240px]">
           <div className="px-3 py-2 border-b border-gray-100">
